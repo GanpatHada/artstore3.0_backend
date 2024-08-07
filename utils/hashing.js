@@ -7,7 +7,7 @@ async function generateHash(password){
   
 }
 
-async function comparePassword(password,hash){
+async function comparePassword(hash,password){
     const result = await bcrypt.compare(password,hash);
     return result;            //hash:password from db
 }
