@@ -10,14 +10,10 @@ async function createUser(userDetails) {
         status: 400,
         message: "user already exists with this email try to login",
       };
-
     const hash = await generateHash(userDetails.password);
-
     const newUser = new User({ ...userDetails, password: hash });
     const savedUser = await newUser.save();
-
     const token = createToken(savedUser._id);
-
     return { status: 200, message: "Signup successful", token };
   } catch (error) {
     throw error;
