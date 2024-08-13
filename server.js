@@ -6,8 +6,8 @@ const PORT=8000||process.env.PORT;
 require('./db.js')
 const userRouter=require('./routes/userRoute.js');
 app.use(express.json())
-app.use('/user',userRouter)
 app.use(cors());
+app.use('/user',userRouter)
 app.use(helmet());
 
 
