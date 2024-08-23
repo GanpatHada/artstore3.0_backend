@@ -1,4 +1,5 @@
 const mongoose=require('mongoose');
+const addressSchema = require('./address');
 
 const userSchema=new mongoose.Schema({
     userName:{
@@ -13,7 +14,8 @@ const userSchema=new mongoose.Schema({
     password:{
         type:String,
         required:true
-    }
+    },
+    addresses:[addressSchema]
 })
 
 const User=mongoose.model('User',userSchema);

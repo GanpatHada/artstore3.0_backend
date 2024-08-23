@@ -1,6 +1,6 @@
 const User = require("../models/user.js");
-const createToken = require("../utils/Token.js");
 const { generateHash, comparePassword } = require("../utils/hashing.js");
+const { createToken } = require("../utils/Token.js");
 
 async function createUser(userDetails) {
   try {
@@ -34,4 +34,17 @@ async function userLogin(userDetails) {
   }
 }
 
-module.exports = { createUser, userLogin };
+async function addAddress(userId, address, markDefault) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return { status: 401, message: "user not found" };
+    if (markDefault) user.addresses = [address, ...user.addresses];
+    else user.addresses = [...user.addresses, address];
+    await user.save();
+    return { status: 200, message: "address added successfuly" };
+  } catch (error) {
+    throw error;
+  }
+}
+
+module.exports = { createUser, userLogin, addAddress };
