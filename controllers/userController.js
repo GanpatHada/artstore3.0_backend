@@ -47,4 +47,16 @@ async function addAddress(userId, address, markDefault) {
   }
 }
 
-module.exports = { createUser, userLogin, addAddress };
+async function getUser(userId){
+  try {
+    const user=await User.findById(userId);
+    if(!user)
+      return {status:401,message:"user not found",data:null}
+    return {status:200,message:"user found",data:user}
+  } catch (error) {
+    throw error;
+  }
+
+}
+
+module.exports = { createUser, userLogin, addAddress,getUser };
