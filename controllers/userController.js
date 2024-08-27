@@ -49,7 +49,7 @@ async function addAddress(userId, address, markDefault) {
 
 async function getUser(userId){
   try {
-    const user=await User.findById(userId);
+    const user=await User.findById(userId).select('-password -_id').exec();
     if(!user)
       return {status:401,message:"user not found",data:null}
     return {status:200,message:"user found",data:user}
