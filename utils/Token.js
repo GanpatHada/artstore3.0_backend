@@ -8,10 +8,10 @@ function createToken(userId) {
 
 function verifyToken(token) {
   try {
-    const decodedToken = jwt.verify(token, MY_SECRET);
-    return decodedToken.userId
+    const decodedTokenData = jwt.verify(token, MY_SECRET);
+    return {message:"user authenticated",data:decodedTokenData.userId,success:true}
   } catch (error) {
-    throw error;
+    return {message:"user not found",success:false}
   }
 }
 module.exports = {createToken,verifyToken};

@@ -1,14 +1,21 @@
 const { verifyToken } = require("../utils/Token");
 
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
   const token = req.headers["authorization"];
-  if (!token) return res.status(401).json({ message: "Token not provided" });
   try {
-    const userId = verifyToken(token);
-    req.userId = userId;
+    if (!token)
+      return res
+        .status(401)
+        .json({ success: false, message: "unauthorized access" });
+    const result = await verifyToken(token);
+    if (!result.success)
+      return res
+        .status(401)
+        .json({ success: result.success, message: result.message });  
+    req.userId = result.data;
     next();
   } catch (error) {
-    res.status(401).json({ message: "unauthorized access" });
+    res.status(401).json({ success: false, message: "unauthorized access" });
   }
 }
-module.exports=authenticateToken;
+module.exports = authenticateToken;

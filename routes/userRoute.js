@@ -21,7 +21,7 @@ userRouter.get("/",async(req,res)=>{
   try {
     const {userId} = req;
     const result=await getUser(userId);
-    res.status(result.status).json({message:result.message,data:result.data});
+    res.status(result.status).json({message:result.message,data:result.data,success:result.success});
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);
