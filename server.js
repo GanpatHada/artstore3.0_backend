@@ -9,10 +9,10 @@ const userRouter = require("./routes/userRoute.js");
 const homeRouter = require("./routes/homeRoute.js");
 const productRouter = require("./routes/productRoute.js");
 
-app.use(helmet());
 app.use(express.json());
-
+app.use(helmet());
 app.use(cors());
+
 app.use("/", homeRouter);
 app.use("/user", userRouter);
 app.use("/products",productRouter);
