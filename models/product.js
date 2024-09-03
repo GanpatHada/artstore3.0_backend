@@ -19,6 +19,10 @@ const productSchema=new mongoose.Schema({
         type:String,
     },
     price:Number,
+    discount:{
+        default:0,
+        type:Number
+    },
     ratings:[RatingSchema],
     reviews:[ReviewSchema]
 })

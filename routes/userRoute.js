@@ -1,5 +1,5 @@
 const express = require("express");
-const { addAddress, getUser } = require("../controllers/userController");
+const { addAddress, getUser, addToCart, addToWishlist } = require("../controllers/userController");
 const authenticateToken = require("../middlewares/auth");
 const userRouter = express.Router();
 userRouter.use(authenticateToken);
@@ -22,6 +22,35 @@ userRouter.get("/",async(req,res)=>{
     const {userId} = req;
     const result=await getUser(userId);
     res.status(result.status).json({message:result.message,data:result.data,success:result.success});
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+  }
+})
+
+userRouter.patch("/cart",async(req,res)=>{
+  const{productId}=req.body;
+  if(!productId)
+    return res.status(401).json({message:"Product id not given",success:false})
+  try {
+    const {userId}=req;
+    const result=await addToCart(userId,productId);
+    return res.status(result.status).json({message:result.message,success:result.success})
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+  }
+})
+
+
+userRouter.patch("/wishlist",async(req,res)=>{
+  const{productId}=req.body;
+  if(!productId)
+    return res.status(401).json({message:"Product id not given",success:false})
+  try {
+    const {userId}=req;
+    const result=await addToWishlist(userId,productId);
+    return res.status(result.status).json({message:result.message,success:result.success})
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);

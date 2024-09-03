@@ -59,4 +59,36 @@ async function getUser(userId){
 
 }
 
-module.exports = { createUser, userLogin, addAddress,getUser };
+async function addToCart(userId,productId)
+{
+  try {
+    const user=await User.findById(userId);
+    if(!user)
+      return {status:401,message:"user not found",success:false};
+    if(user.cart.includes(productId))
+      return {status:401,message:"already in Cart",success:false}
+    user.cart=[...user.cart,productId];
+    await user.save();
+    return {status:201,message:"Product has been added to cart",success:true};
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function addToWishlist(userId,productId)
+{
+  try {
+    const user=await User.findById(userId);
+    if(!user)
+      return {status:401,message:"user not found",success:false};
+    if(user.wishlist.includes(productId))
+      return {status:401,message:"already in wishlist",success:false}
+    user.wishlist=[...user.wishlist,productId];
+    await user.save();
+    return {status:201,message:"Product has been added to Wishlist",success:true};
+  } catch (error) {
+    throw error;
+  }
+}
+
+module.exports = { createUser, userLogin, addAddress,getUser,addToCart,addToWishlist};
