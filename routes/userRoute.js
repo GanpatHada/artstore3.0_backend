@@ -23,7 +23,7 @@ userRouter.get("/",async(req,res)=>{
     const result=await getUser(userId);
     res.status(result.status).json({message:result.message,data:result.data,success:result.success});
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({success:false,message: "Internal server error",data:null});
     console.log(error);
   }
 })
