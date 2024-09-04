@@ -11,7 +11,7 @@ function verifyToken(token) {
     const decodedTokenData = jwt.verify(token, MY_SECRET);
     return {message:"user authenticated",data:decodedTokenData.userId,success:true}
   } catch (error) {
-    return {message:"user not found",success:false}
+    return {message:"unauthorized access",success:false}
   }
 }
 module.exports = {createToken,verifyToken};
