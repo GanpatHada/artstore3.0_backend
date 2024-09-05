@@ -48,77 +48,96 @@ async function addAddress(userId, address, markDefault) {
   }
 }
 
-async function getUser(userId){
+async function getUser(userId) {
   try {
-    const user=await User.findById(userId).select('-password -_id').exec();
-    if(!user)
-      return {status:401,message:"user not found",success:false}
-    return {status:200,message:"user found",data:user,success:true}
+    const user = await User.findById(userId).select("-password -_id").exec();
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    return { status: 200, message: "user found", data: user, success: true };
   } catch (error) {
     throw error;
   }
-
 }
 
-async function addToCart(userId,productId)
-{
+async function addToCart(userId, productId) {
   try {
-    const user=await User.findById(userId);
-    if(!user)
-      return {status:401,message:"user not found",success:false};
-    if(user.cart.includes(productId))
-      return {status:401,message:"already in Cart",success:false}
-    user.cart=[...user.cart,productId];
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    if (user.cart.includes(productId))
+      return { status: 401, message: "already in Cart", success: false };
+    user.cart = [...user.cart, productId];
     await user.save();
-    return {status:201,message:"Product has been added to cart",success:true};
+    return {
+      status: 201,
+      message: "Product has been added to cart",
+      success: true,
+    };
   } catch (error) {
     throw error;
   }
 }
 
-async function addToWishlist(userId,productId)
-{
+async function addToWishlist(userId, productId) {
   try {
-    const user=await User.findById(userId);
-    if(!user)
-      return {status:401,message:"user not found",success:false};
-    if(user.wishlist.includes(productId))
-      return {status:401,message:"already in wishlist",success:false}
-    user.wishlist=[...user.wishlist,productId];
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    if (user.wishlist.includes(productId))
+      return { status: 401, message: "already in wishlist", success: false };
+    user.wishlist = [...user.wishlist, productId];
     await user.save();
-    return {status:201,message:"Product has been added to Wishlist",success:true};
+    return {
+      status: 201,
+      message: "Product has been added to Wishlist",
+      success: true,
+    };
   } catch (error) {
     throw error;
   }
 }
-async function deleteFromCart(userId,productId){
-    try {
-      const user=await User.findById(userId);
-      if(!user)
-        return {status:401,message:"user not found",success:false}
-      user.cart=user.cart.filter((prodId)=>prodId.toString()!==productId
-      )
-      await user.save();
-      return {status:200,message:"product has been removed from cart",success:true}
-    } catch (error) {
-      throw error;
-    }
-  
-}
-async function deleteFromWishlist(userId,productId){
-   try {
-    const user=await User.findById(userId);
-    if(!user)
-      return {status:401,message:"user not found",success:false}
-    user.wishlist=user.wishlist.filter(prodId=>prodId.toString()!==productId)
+async function deleteFromCart(userId, productId) {
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    user.cart = user.cart.filter((prodId) => prodId.toString() !== productId);
     await user.save();
-    return {status:200,message:"product has been removed from wishlist",success:true}
+    return {
+      status: 200,
+      message: "product has been removed from cart",
+      success: true,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+async function deleteFromWishlist(userId, productId) {
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    user.wishlist = user.wishlist.filter(
+      (prodId) => prodId.toString() !== productId
+    );
+    await user.save();
+    return {
+      status: 200,
+      message: "product has been removed from wishlist",
+      success: true,
+    };
   } catch (error) {
     throw error;
   }
 }
 
-
-
-
-module.exports = { createUser, userLogin, addAddress,getUser,addToCart,addToWishlist,deleteFromCart,deleteFromWishlist};
+module.exports = {
+  createUser,
+  userLogin,
+  addAddress,
+  getUser,
+  addToCart,
+  addToWishlist,
+  deleteFromCart,
+  deleteFromWishlist,
+};
