@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const User = require("../models/user.js");
 const { generateHash, comparePassword } = require("../utils/hashing.js");
 const { createToken } = require("../utils/Token.js");
@@ -90,5 +91,34 @@ async function addToWishlist(userId,productId)
     throw error;
   }
 }
+async function deleteFromCart(userId,productId){
+    try {
+      const user=await User.findById(userId);
+      if(!user)
+        return {status:401,message:"user not found",success:false}
+      user.cart=user.cart.filter((prodId)=>prodId.toString()!==productId
+      )
+      await user.save();
+      return {status:200,message:"product has been removed from cart",success:true}
+    } catch (error) {
+      throw error;
+    }
+  
+}
+async function deleteFromWishlist(userId,productId){
+   try {
+    const user=await User.findById(userId);
+    if(!user)
+      return {status:401,message:"user not found",success:false}
+    user.wishlist=user.wishlist.filter(prodId=>prodId.toString()!==productId)
+    await user.save();
+    return {status:200,message:"product has been removed from wishlist",success:true}
+  } catch (error) {
+    throw error;
+  }
+}
 
-module.exports = { createUser, userLogin, addAddress,getUser,addToCart,addToWishlist};
+
+
+
+module.exports = { createUser, userLogin, addAddress,getUser,addToCart,addToWishlist,deleteFromCart,deleteFromWishlist};
