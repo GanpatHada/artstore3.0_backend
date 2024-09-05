@@ -28,7 +28,7 @@ productRouter.get("/:productId",async(req,res)=>{
     try {
         const {productId}=req.params;
         const result=await getProductDetails(productId);
-        res.status(result.status).json({message:result.message,data:result.data})
+        res.status(result.status).json({message:result.message,data:result.data,success:result.success})
     } catch (error) {
         res.status(500).json({message:"Internal server error"}); 
     }
