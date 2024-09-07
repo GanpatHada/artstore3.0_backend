@@ -35,14 +35,14 @@ async function userLogin(userDetails) {
   }
 }
 
-async function addAddress(userId, address, markDefault) {
+async function addAddress(userId, address) {
   try {
     const user = await User.findById(userId);
-    if (!user) return { status: 401, message: "user not found" };
-    if (markDefault) user.addresses = [address, ...user.addresses];
-    else user.addresses = [...user.addresses, address];
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    user.addresses = [address, ...user.addresses];
     await user.save();
-    return { status: 200, message: "address added successfuly" };
+    return { status: 200, message: "address added successfuly", success: true };
   } catch (error) {
     throw error;
   }
@@ -131,6 +131,57 @@ async function deleteFromWishlist(userId, productId) {
   }
 }
 
+async function editAddress(userId, addressId, addressData) {
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    const requiredAddress = user.addresses.find(
+      (address) => address._id.toString() === addressId.toString()
+    );
+    if (!requiredAddress)
+      return { status: 401, message: "address not found", success: false };
+    user.addresses = user.addresses.map((address) => {
+      if (address._id.toString() === addressId.toString())
+        return { ...addressData };
+      return { ...address };
+    });
+    await user.save();
+    return {
+      status: 200,
+      message: "address edited successfully",
+      success: true,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function markAddressDefault(userId, addressId) {
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    const requiredAddress = user.addresses.find(
+      (address) => address._id.toString() === addressId.toString()
+    );
+    if (!requiredAddress)
+      return { status: 401, message: "address not found", success: false };
+    const remainingAddresses = user.addresses.filter(
+      (address) => address._id.toString() !== addressId.toString()
+    );
+    user.addresses = [requiredAddress, ...remainingAddresses];
+    await user.save();
+    return {
+      status: 200,
+      message: "address has been marked default",
+      success: true,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   createUser,
   userLogin,
@@ -140,4 +191,6 @@ module.exports = {
   addToWishlist,
   deleteFromCart,
   deleteFromWishlist,
+  editAddress,
+  markAddressDefault,
 };
