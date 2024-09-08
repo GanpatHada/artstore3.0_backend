@@ -3,34 +3,47 @@ const mongoose = require('mongoose');
 const addressSchema=new mongoose.Schema({
     name:{
         type:String,
-        required:true
+        required:true,
+        default:""
     },
     mobileNumber:{
-        type:Number,
-        required:true
+        type:String,
+        required:true,
+        default:""
     },
     pinCode:{
         required:true,
-        type:Number
+        type:String,
+        default:""
     },
     address1:{
         required:true,
-        type:String
+        type:String,
+        default:""
     },
     address2:{
-        type:String
+        type:String,
+        default:""
     },
     landmark:{
-        type:String
+        type:String,
+        default:""
     },
     city:{
-        type:String
+        type:String,
+        required:true,
+        default:""
+        
     },
     state:{
-        type:String
+        type:String,
+        required:true,
+        default:""
     },
     country:{
-        type:String
+        type:String,
+        required:true,
+        default:""
     }
     
     
