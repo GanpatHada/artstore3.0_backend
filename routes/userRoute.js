@@ -21,7 +21,7 @@ userRouter.post("/address/", async (req, res) => {
     if (!addressData)
       return res.status(400).json({ message: "address is required" });
     const result = await addAddress(userId, addressData);
-    res.status(result.status).json({ message: result.message,data:result.data});
+    res.status(result.status).json({ message: result.message,data:result.data,success:result.success});
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);
