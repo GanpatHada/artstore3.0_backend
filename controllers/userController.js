@@ -42,7 +42,7 @@ async function addAddress(userId, address) {
       return { status: 401, message: "user not found", success: false };
     user.addresses = [address, ...user.addresses];
     await user.save();
-    return { status: 200, message: "address added successfuly", success: true };
+    return { status: 201, message: "address added successfuly", success: true };
   } catch (error) {
     throw error;
   }
@@ -148,7 +148,7 @@ async function editAddress(userId, addressId, addressData) {
     });
     await user.save();
     return {
-      status: 200,
+      status: 201,
       message: "address edited successfully",
       success: true,
     };
@@ -173,13 +173,30 @@ async function markAddressDefault(userId, addressId) {
     user.addresses = [requiredAddress, ...remainingAddresses];
     await user.save();
     return {
-      status: 200,
+      status: 201,
       message: "address has been marked default",
       success: true,
     };
   } catch (error) {
     throw error;
   }
+}
+
+async function deleteAddress(userId, addressId) {
+ try {
+  const user = await User.findById(userId);
+  if (!user) return { status: 401, message: "user not found", success: false };
+  const requiredAddress = user.addresses.find(
+    (address) => address._id.toString() === addressId.toString()
+  );
+  if (!requiredAddress)
+    return { status: 401, message: "address not found", success: false };
+  user.addresses=user.addresses.filter(address=>address._id.toString()!==addressId.toString())
+  await user.save();
+  return {status:201,message:"address deleted successfully",success:true}
+ } catch (error) {
+  throw error;
+ }
 }
 
 module.exports = {
@@ -193,4 +210,5 @@ module.exports = {
   deleteFromWishlist,
   editAddress,
   markAddressDefault,
+  deleteAddress,
 };

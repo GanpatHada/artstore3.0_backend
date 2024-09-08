@@ -8,6 +8,7 @@ const {
   deleteFromWishlist,
   editAddress,
   markAddressDefault,
+  deleteAddress,
 } = require("../controllers/userController");
 const authenticateToken = require("../middlewares/auth");
 const userRouter = express.Router();
@@ -66,6 +67,23 @@ userRouter.patch("/address/default/:addressId", async (req, res) => {
     console.log(error);
   }
 });
+
+userRouter.delete("/address/:addressId",async(req,res)=>{
+  try {
+    const {userId}=req;
+    const {addressId}=req.params;
+    if (!addressId)
+      return res
+        .status(400)
+        .json({ message: "address id not given", success: false });
+    const result=await deleteAddress(userId,addressId);
+    res.status(result.status).json({message:result.message,success:result.success})    
+
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+  }
+})
 
 userRouter.get("/", async (req, res) => {
   try {
