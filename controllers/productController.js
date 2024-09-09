@@ -23,6 +23,16 @@ async function getProducts(){
   }
 }
 
+async function getProductsWithDiscount(discount){
+  let discountInNumber=Number(discount)
+  try {
+    const products=await Product.find({discount: { $gte: discountInNumber}})
+    return {status:200,message:"products fetched successfully",success:true,data:products}
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function getProductDetails(productId){
   try {
     const product=await Product.findById(productId);
@@ -34,4 +44,4 @@ async function getProductDetails(productId){
   }
 }
 
-module.exports = { addProduct,getProducts,getProductDetails };
+module.exports = { addProduct,getProducts,getProductDetails,getProductsWithDiscount };

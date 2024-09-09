@@ -25,7 +25,7 @@ const productSchema=new mongoose.Schema({
     },
     ratings:[RatingSchema],
     reviews:[ReviewSchema]
-})
+},{timestamps:true});
 
 const Product = mongoose.model("Product",productSchema)
 module.exports=Product;
