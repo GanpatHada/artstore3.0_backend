@@ -33,9 +33,10 @@ async function getProductsWithDiscount(discount){
   }
 }
 
+
 async function getProductDetails(productId){
   try {
-    const product=await Product.findById(productId);
+    const product=await Product.findById(productId).populate({path:"reviews.userId",select:"userName email"});
     if(product)
       return {status:200,message:"product details fetched successfully",success:true,data:product}
     return {status:401,message:"product details not found",success:false,data:null}
