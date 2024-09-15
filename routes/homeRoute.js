@@ -2,11 +2,13 @@ const express = require("express");
 const Razorpay=require('razorpay')
 const { createUser, userLogin } = require("../controllers/userController");
 const homeRouter = express.Router();
-
+require('dotenv').config()
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY,
   key_secret: process.env.RAZORPAY_SECRET
 });
+
+
 
 homeRouter.post('/create-order', async (req, res) => {
   const { amount, currency, receipt } = req.body;
