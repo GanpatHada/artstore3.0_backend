@@ -14,4 +14,12 @@ function verifyToken(token) {
     return {message:"unauthorized access",success:false}
   }
 }
-module.exports = {createToken,verifyToken};
+
+function verifyRazorpaySignature(signature,orderId,paymentId){
+  const generatedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_SECRET)
+    .update(orderId + "|" + paymentId)
+    .digest("hex");
+  return (generatedSignature===signature)
+}
+module.exports = {createToken,verifyToken,verifyRazorpaySignature};
