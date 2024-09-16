@@ -1,6 +1,6 @@
 const Payment = require("../models/payment");
 
-async function addPayment(paymentId, orderId, amount, signature) {
+async function addPayment({paymentId, orderId, amount, signature}) {
   try {
     const payment = new Payment({
       paymentId,

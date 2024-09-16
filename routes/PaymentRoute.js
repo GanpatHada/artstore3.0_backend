@@ -5,6 +5,9 @@ const { addPayment } = require("../controllers/paymentController");
 const { verifyRazorpaySignature } = require("../utils/Token");
 const paymentRouter = express.Router();
 require("dotenv").config();
+
+
+
 paymentRouter.post("/create-order", async (req, res) => {
   const { amount, currency, receipt } = req.body;
   if (!amount)
@@ -34,7 +37,7 @@ paymentRouter.post("/save-payment", async(req, res) => {
   const { paymentId, orderId, signature, amount } = req.body;
   if (!paymentId && !orderId && !signature && !amount)
     return res.status(400).json({message:"fields are empty",success:false})
-  const signatureVerified=verifyRazorpaySignature(paymentId,orderId,signature);
+  const signatureVerified=verifyRazorpaySignature(orderId,paymentId,signature)
   if(!signatureVerified)
     return res.status(400).json({message:"unauthorized access to order page",success:false});
   const result=await addPayment(req.body);

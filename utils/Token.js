@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const crypto=require('crypto')
 require("dotenv").config();
 const MY_SECRET = process.env.SECRET_KEY;
 function createToken(userId) {
@@ -15,11 +16,12 @@ function verifyToken(token) {
   }
 }
 
-function verifyRazorpaySignature(signature,orderId,paymentId){
+function verifyRazorpaySignature(orderId,paymentId,signature){
   const generatedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_SECRET)
     .update(orderId + "|" + paymentId)
     .digest("hex");
+  console.log(generatedSignature)  
   return (generatedSignature===signature)
 }
 module.exports = {createToken,verifyToken,verifyRazorpaySignature};
