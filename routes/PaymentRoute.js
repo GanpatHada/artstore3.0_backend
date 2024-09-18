@@ -42,7 +42,9 @@ paymentRouter.post("/save-payment", async(req, res) => {
     return res.status(400).json({message:"unauthorized access to order page",success:false});
   const result=await addPayment(req.body);
   if(result.success)
-    return res.status(result.status).json({message:result.message,success:result.success})
+     res.status(result.status).json({message:result.message,success:result.success})
+  const paymentDetails= await razorpay.payments.fetch(paymentId);
+  console.log(paymentDetails);
     
 });
 

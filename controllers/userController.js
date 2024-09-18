@@ -40,9 +40,9 @@ async function addAddress(userId, address) {
     const user = await User.findById(userId);
     if (!user)
       return { status: 401, message: "user not found", success: false };
-    user.addresses = [address, ...user.addresses];
+    user.addresses = [...user.addresses,address];
     await user.save();
-    const recentAddress = user.addresses[0];
+    const recentAddress = user.addresses[user.addresses.length-1];
     return {
       status: 201,
       message: "address added successfuly",
@@ -53,6 +53,36 @@ async function addAddress(userId, address) {
     throw error;
   }
 }
+
+
+async function editAddress(userId, addressId, addressData) {
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    const requiredAddress = user.addresses.find(
+      (address) => address._id.toString() === addressId.toString()
+    );
+    if (!requiredAddress)
+      return { status: 401, message: "address not found", success: false };
+    user.addresses = user.addresses.map((address) => {
+      if (address._id.toString() === addressId.toString())
+        return { ...addressData };
+      return { ...address };
+    });
+    await user.save();
+    const editedAddress=user.addresses.find(address=>address._id.toString()===addressId.toString())
+    return {
+      status: 201,
+      message: "address edited successfully",
+      data: editedAddress,
+      success: true,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
 
 async function getUser(userId) {
   try {
@@ -83,6 +113,8 @@ async function addToCart(userId, productId) {
     throw error;
   }
 }
+
+
 
 async function addToWishlist(userId, productId) {
   try {
@@ -137,31 +169,7 @@ async function deleteFromWishlist(userId, productId) {
   }
 }
 
-async function editAddress(userId, addressId, addressData) {
-  try {
-    const user = await User.findById(userId);
-    if (!user)
-      return { status: 401, message: "user not found", success: false };
-    const requiredAddress = user.addresses.find(
-      (address) => address._id.toString() === addressId.toString()
-    );
-    if (!requiredAddress)
-      return { status: 401, message: "address not found", success: false };
-    user.addresses = user.addresses.map((address) => {
-      if (address._id.toString() === addressId.toString())
-        return { ...addressData };
-      return { ...address };
-    });
-    await user.save();
-    return {
-      status: 201,
-      message: "address edited successfully",
-      success: true,
-    };
-  } catch (error) {
-    throw error;
-  }
-}
+
 
 async function markAddressDefault(userId, addressId) {
   try {

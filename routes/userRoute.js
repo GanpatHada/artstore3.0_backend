@@ -43,7 +43,7 @@ userRouter.patch("/address/edit/:addressId", async (req, res) => {
     const result = await editAddress(userId, addressId, addressData);
     res
       .status(result.status)
-      .json({ message: result.message, success: result.success });
+      .json({ message: result.message, success: result.success ,data:result.data});
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);
