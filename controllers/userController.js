@@ -60,15 +60,10 @@ async function editAddress(userId, addressId, addressData) {
     const user = await User.findById(userId);
     if (!user)
       return { status: 401, message: "user not found", success: false };
-    const requiredAddress = user.addresses.find(
-      (address) => address._id.toString() === addressId.toString()
-    );
-    if (!requiredAddress)
-      return { status: 401, message: "address not found", success: false };
     user.addresses = user.addresses.map((address) => {
       if (address._id.toString() === addressId.toString())
-        return { ...addressData };
-      return { ...address };
+        return {_id:address._id,...addressData};
+      return {...address};
     });
     await user.save();
     const editedAddress=user.addresses.find(address=>address._id.toString()===addressId.toString())
