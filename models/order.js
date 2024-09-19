@@ -1,21 +1,35 @@
 const mongoose = require("mongoose");
 
 const OrderSchema = new mongoose.Schema({
+  orderId:{
+    required:true,
+    type:'String'
+  },
+  payment_orderId:{
+    required:true,
+    type:String,
+  },
+  paymentId:{
+    required:true,
+    type:String
+  },
   userId:{
     required:true,
     type:mongoose.Types.ObjectId,
     ref:"User"
-
   },
-  productId: {
+  products: [{
     required: true,
     type: mongoose.Types.ObjectId,
     ref: "Product",
+  }],
+  amount:{
+    required:true,
+    type:Number
   },
-  amount:Number,
-  paymentId:String,
-  orderId:String,
   signature:String
+
+  
 });
  
 const Order=mongoose.model("Order",OrderSchema);

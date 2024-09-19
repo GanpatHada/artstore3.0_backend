@@ -1,6 +1,5 @@
 const express = require("express");
 const razorpay = require("../rzp.init");
-const Payment = require("../models/payment");
 const { addPayment } = require("../controllers/paymentController");
 const { verifyRazorpaySignature } = require("../utils/Token");
 const paymentRouter = express.Router();
@@ -9,7 +8,7 @@ require("dotenv").config();
 
 
 paymentRouter.post("/create-order", async (req, res) => {
-  const { amount, currency, receipt } = req.body;
+  const { amount, currency, receiptNo } = req.body;
   if (!amount)
     return res
       .status(400)
@@ -17,7 +16,7 @@ paymentRouter.post("/create-order", async (req, res) => {
   const options = {
     amount: amount * 100,
     currency: currency || "INR",
-    receipt: receipt || "order_rcptid_11",
+    receipt: receiptNo || "order_rcptid_11",
     payment_capture: 1,
   };
 
@@ -34,17 +33,17 @@ paymentRouter.post("/create-order", async (req, res) => {
 });
 
 paymentRouter.post("/save-payment", async(req, res) => {
-  const { paymentId, orderId, signature, amount } = req.body;
-  if (!paymentId && !orderId && !signature && !amount)
+  const { paymentId, payment_orderId, signature, amount,products,userId} = req.body;
+  if (!paymentId || !payment_orderId || !signature || !amount)
     return res.status(400).json({message:"fields are empty",success:false})
+  const orderId=payment_orderId
   const signatureVerified=verifyRazorpaySignature(orderId,paymentId,signature)
   if(!signatureVerified)
     return res.status(400).json({message:"unauthorized access to order page",success:false});
   const result=await addPayment(req.body);
+  console.log(result);
   if(result.success)
-     res.status(result.status).json({message:result.message,success:result.success})
-  const paymentDetails= await razorpay.payments.fetch(paymentId);
-  console.log(paymentDetails);
+     res.status(result.status).json({message:result.message,success:result.success,data:result.data})
     
 });
 

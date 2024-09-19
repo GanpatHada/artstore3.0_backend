@@ -1,18 +1,21 @@
-const Payment = require("../models/payment");
-
-async function addPayment({paymentId, orderId, amount, signature}) {
+const { v4 : uuid } = require("uuid");
+const Order = require("../models/order");
+async function addPayment({paymentId,payment_orderId, signature, amount,products,userId}){
+  const orderId=uuid()
   try {
-    const payment = new Payment({
-      paymentId,
+    const order = new Order({
       orderId,
+      paymentId,
+      payment_orderId,
       amount,
       signature,
+      products,
+      userId
     });
-    await payment.save();
-    return {status:201,message:"payment saved",success:true}
+    const savedOrder=await order.save();
+    return {status:201,message:"payment saved",success:true,data:savedOrder}
   } catch (error) {
     throw error;
   }
 }
-
 module.exports = { addPayment };
