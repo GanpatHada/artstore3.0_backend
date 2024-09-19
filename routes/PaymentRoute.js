@@ -2,13 +2,14 @@ const express = require("express");
 const razorpay = require("../rzp.init");
 const { addPayment } = require("../controllers/paymentController");
 const { verifyRazorpaySignature } = require("../utils/Token");
+const { nanoid } = require("nanoid");
 const paymentRouter = express.Router();
 require("dotenv").config();
 
 
 
 paymentRouter.post("/create-order", async (req, res) => {
-  const { amount, currency, receiptNo } = req.body;
+  const { amount,currency,} = req.body;
   if (!amount)
     return res
       .status(400)
@@ -16,7 +17,7 @@ paymentRouter.post("/create-order", async (req, res) => {
   const options = {
     amount: amount * 100,
     currency: currency || "INR",
-    receipt: receiptNo || "order_rcptid_11",
+    receipt: nanoid() || "order_rcptid_11",
     payment_capture: 1,
   };
 
