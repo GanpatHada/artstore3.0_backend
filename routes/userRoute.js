@@ -9,6 +9,7 @@ const {
   editAddress,
   markAddressDefault,
   deleteAddress,
+  getOrders,
 } = require("../controllers/userController");
 const authenticateToken = require("../middlewares/auth");
 const userRouter = express.Router();
@@ -21,7 +22,13 @@ userRouter.post("/address/", async (req, res) => {
     if (!addressData)
       return res.status(400).json({ message: "address is required" });
     const result = await addAddress(userId, addressData);
-    res.status(result.status).json({ message: result.message,data:result.data,success:result.success});
+    res
+      .status(result.status)
+      .json({
+        message: result.message,
+        data: result.data,
+        success: result.success,
+      });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);
@@ -43,7 +50,11 @@ userRouter.patch("/address/edit/:addressId", async (req, res) => {
     const result = await editAddress(userId, addressId, addressData);
     res
       .status(result.status)
-      .json({ message: result.message, success: result.success ,data:result.data});
+      .json({
+        message: result.message,
+        success: result.success,
+        data: result.data,
+      });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);
@@ -68,22 +79,23 @@ userRouter.patch("/address/default/:addressId", async (req, res) => {
   }
 });
 
-userRouter.delete("/address/:addressId",async(req,res)=>{
+userRouter.delete("/address/:addressId", async (req, res) => {
   try {
-    const {userId}=req;
-    const {addressId}=req.params;
+    const { userId } = req;
+    const { addressId } = req.params;
     if (!addressId)
       return res
         .status(400)
         .json({ message: "address id not given", success: false });
-    const result=await deleteAddress(userId,addressId);
-    res.status(result.status).json({message:result.message,success:result.success})    
-
+    const result = await deleteAddress(userId, addressId);
+    res
+      .status(result.status)
+      .json({ message: result.message, success: result.success });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.log(error);
   }
-})
+});
 
 userRouter.get("/", async (req, res) => {
   try {
@@ -170,6 +182,23 @@ userRouter.delete("/wishlist", async (req, res) => {
       .json({ message: result.message, success: result.success });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+  }
+});
+
+userRouter.get("/orders", async (req, res) => {
+  try {
+    const { userId } = req;
+    const result = await getOrders(userId);
+    return res
+      .status(result.status)
+      .json({
+        message: result.message,
+        data: result.data,
+        success: result.success,
+      });
+  } catch (error) {
+    res.status(500).json({message:"Internal server error"});
     console.log(error);
   }
 });

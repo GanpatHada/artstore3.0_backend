@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const User = require("../models/user.js");
 const { generateHash, comparePassword } = require("../utils/hashing.js");
 const { createToken } = require("../utils/Token.js");
+const Order = require("../models/order.js");
 
 async function createUser(userDetails) {
   try {
@@ -215,6 +216,18 @@ async function deleteAddress(userId, addressId) {
   }
 }
 
+async function getOrders(userId){
+  try {
+    const user = await User.findById(userId);
+    if (!user)
+      return { status: 401, message: "user not found", success: false };
+    let ordersList=await Order.find({userId:userId}).populate("products");
+    return {status:201,message:"orders fetched successfully",data:ordersList,success:true}
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   createUser,
   userLogin,
@@ -227,4 +240,5 @@ module.exports = {
   editAddress,
   markAddressDefault,
   deleteAddress,
+  getOrders
 };
