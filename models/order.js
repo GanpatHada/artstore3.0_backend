@@ -27,9 +27,12 @@ const OrderSchema = new mongoose.Schema({
     required:true,
     type:Number
   },
+  address:String,
   signature:String
 
   
+},{
+  timestamps:true
 });
  
 const Order=mongoose.model("Order",OrderSchema);

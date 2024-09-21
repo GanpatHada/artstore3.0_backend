@@ -36,8 +36,8 @@ paymentRouter.post("/create-order", async (req, res) => {
 
 paymentRouter.post("/save-payment",authenticateToken, async(req, res) => {
   const userId=req.userId;
-  const { paymentId, payment_orderId, signature, amount,products} = req.body;
-  if (!paymentId || !payment_orderId || !signature || !amount || !products ||!userId)
+  const { paymentId, payment_orderId, signature, amount,products,address} = req.body;
+  if (!paymentId || !payment_orderId || !signature || !amount || !products ||!userId ||!address)
     return res.status(400).json({message:"fields are empty",success:false})
   const orderId=payment_orderId
   const signatureVerified=verifyRazorpaySignature(orderId,paymentId,signature)
