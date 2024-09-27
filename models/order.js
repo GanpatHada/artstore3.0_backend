@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { addressSchema } = require("./address");
 
 const OrderSchema = new mongoose.Schema({
   orderId:{
@@ -27,7 +28,7 @@ const OrderSchema = new mongoose.Schema({
     required:true,
     type:Number
   },
-  address:String,
+  address:addressSchema,
   signature:String
 
   

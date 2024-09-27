@@ -1,5 +1,6 @@
 const mongoose=require('mongoose');
-const addressSchema = require('./address');
+const { addressSchema } = require('./address');
+
 
 const userSchema=new mongoose.Schema({
     userName:{
