@@ -1,16 +1,14 @@
 const express = require("express");
 const razorpay = require("../rzp.init");
-const { addPayment } = require("../controllers/paymentController");
+const { addPayment, getPaymentDetails } = require("../controllers/paymentController");
 const { verifyRazorpaySignature } = require("../utils/Token");
 const { nanoid } = require("nanoid");
 const authenticateToken = require("../middlewares/auth");
 const paymentRouter = express.Router();
 require("dotenv").config();
 
-
-
 paymentRouter.post("/create-order", async (req, res) => {
-  const { amount,currency,} = req.body;
+  const { amount, currency } = req.body;
   if (!amount)
     return res
       .status(400)
@@ -26,7 +24,11 @@ paymentRouter.post("/create-order", async (req, res) => {
     const order = await razorpay.orders.create(options);
     res.status(200).json({
       message: "order created successfully",
-      data: order,
+      data: {
+        ...order,
+        amount: order.amount / 100,
+        amount_due: order.amount_due / 100,
+      },
       success: true,
     });
   } catch (error) {
@@ -34,20 +36,54 @@ paymentRouter.post("/create-order", async (req, res) => {
   }
 });
 
-paymentRouter.post("/save-payment",authenticateToken, async(req, res) => {
-  const userId=req.userId;
-  const { paymentId, payment_orderId, signature, amount,products,address} = req.body;
-  if (!paymentId || !payment_orderId || !signature || !amount || !products ||!userId ||!address)
-    return res.status(400).json({message:"fields are empty",success:false})
-  const orderId=payment_orderId
-  const signatureVerified=verifyRazorpaySignature(orderId,paymentId,signature)
-  if(!signatureVerified)
-    return res.status(400).json({message:"unauthorized access to order page",success:false});
-  const result=await addPayment({...req.body,userId});
+paymentRouter.post("/save-payment", authenticateToken, async (req, res) => {
+  const userId = req.userId;
+  const { paymentId, payment_orderId, signature, amount, products, address } =
+    req.body;
+  if (
+    !paymentId ||
+    !payment_orderId ||
+    !signature ||
+    !amount ||
+    !products ||
+    !userId ||
+    !address
+  )
+    return res
+      .status(400)
+      .json({ message: "fields are empty", success: false });
+  const orderId = payment_orderId;
+  const signatureVerified = verifyRazorpaySignature(
+    orderId,
+    paymentId,
+    signature
+  );
+  if (!signatureVerified)
+    return res
+      .status(400)
+      .json({ message: "unauthorized access to order page", success: false });
+  const result = await addPayment({ ...req.body, userId });
   console.log(result);
-  if(result.success)
-     res.status(result.status).json({message:result.message,success:result.success,data:result.data})
-    
+  if (result.success)
+    res
+      .status(result.status)
+      .json({
+        message: result.message,
+        success: result.success,
+        data: result.data,
+      });
+});
+
+paymentRouter.get("/payment-details/:paymentId", async (req, res) => {
+  const { paymentId } = req.params;
+  if(!paymentId)
+    return res.status(400).json({message:'paymentId not found',success:false})
+  try {
+    const result=await getPaymentDetails(paymentId);
+    return res.status(result.status).json({message:result.message,success:result.success,data:result.data})
+  } catch (error) {
+    return res.status(500).json({message:"Internal server error",success:false})
+  }
 });
 
 module.exports = paymentRouter;

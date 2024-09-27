@@ -1,5 +1,6 @@
 const { v4 : uuid } = require("uuid");
 const Order = require("../models/order");
+const razorpay = require("../rzp.init");
 async function addPayment({paymentId,payment_orderId, signature, amount,products,address,userId}){
   const orderId=uuid()
   try {
@@ -20,4 +21,14 @@ async function addPayment({paymentId,payment_orderId, signature, amount,products
     throw error;
   }
 }
-module.exports = { addPayment };
+
+async function getPaymentDetails(paymentId){
+  try {
+    const payments=await razorpay.payments.fetch(paymentId);
+    return {status:200,data:payments,success:true}
+  } catch (error) {
+    throw error;
+  }
+  
+}
+module.exports = { addPayment,getPaymentDetails };
