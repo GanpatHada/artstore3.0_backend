@@ -19,7 +19,7 @@ app.use(cookieParser())
 app.use(helmet());
 app.use(cors());
 
-app.use("/api/v1", homeRouter);
+app.use("/", homeRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/seller",sellerRouter)
 app.use("/api/v1/products",productRouter);
