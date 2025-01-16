@@ -7,7 +7,7 @@ class ApiError extends Error {
   ) {
     super(message);
     this.statusCode = statusCode;
-    this.message = message;
+    this.data=null;
     this.success = false;
     this.errors = errors;
 
@@ -20,4 +20,5 @@ class ApiError extends Error {
     }
   }
 }
-export default ApiError;
+module.exports=ApiError
+

@@ -54,12 +54,15 @@ sellerSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-sellerSchema.methods.generateAcessToken = async function () {
+sellerSchema.methods.generateAccessToken = async function () {
   return jwt.sign(
     {
       _id: this._id,
     },
-    process.env.ACCESS_TOKEN_SECRET
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY 
+    }
   );
 };
 sellerSchema.methods.generateRefreshToken = async function () {
@@ -67,7 +70,10 @@ sellerSchema.methods.generateRefreshToken = async function () {
     {
       _id: this._id,
     },
-    process.env.REFRESH_TOKEN_SECRET
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY 
+    }
   );
 };
 

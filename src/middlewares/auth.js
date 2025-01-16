@@ -1,21 +1,20 @@
-const { verifyToken } = require("../utils/Token");
+const ApiError = require("../utils/ApiError");
+const asyncHandler = require("../utils/asynchandler");
+const jwt=require('jsonwebtoken')
 
-async function authenticateToken(req, res, next) {
-  const token = req.headers["authorization"];
+const verifyJwt=asyncHandler(async(req,_,next)=>{
   try {
-    if (!token)
-      return res
-        .status(401)
-        .json({ success: false, message: "unauthorized access" });
-    const result = await verifyToken(token);
-    if (!result.success)
-      return res
-        .status(401)
-        .json({ success: result.success, message: result.message });  
-    req.userId = result.data;
+    const token=req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
+    if(!token)
+    {
+      throw new ApiError(401,"unauthorized access")
+    }
+    const decodedJwt= jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
+    req._id=decodedJwt._id;
     next();
   } catch (error) {
-    res.status(401).json({ success: false, message: "unauthorized access" });
+    throw new ApiError(401,"Invalid access token")
   }
-}
-module.exports = authenticateToken;
+})
+
+module.exports=verifyJwt
