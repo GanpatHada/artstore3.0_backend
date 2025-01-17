@@ -17,7 +17,12 @@ app.use(express.urlencoded({extended:true,limit:'16kb'}));
 app.use(express.static('public'));
 app.use(cookieParser())
 app.use(helmet());
-app.use(cors());
+app.use(cors(
+    {
+        origin: "*",
+        credentials: true
+    }
+));
 
 app.use("/", homeRouter);
 app.use("/api/v1/user", userRouter);
