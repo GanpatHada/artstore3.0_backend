@@ -23,7 +23,7 @@ const registerSeller = asyncHandler(async (req, res) => {
   //check empty and missing fields
   if (
     [fullName, email, password, phone].some(
-      (field) => field === undefined || field.trim().length === 0
+      (field) =>field?.trim().length === 0
     )
   ) {
     throw new ApiError(400, "required fields either empty or missing");
