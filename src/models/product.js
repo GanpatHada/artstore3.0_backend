@@ -49,7 +49,7 @@ const productSchema = new mongoose.Schema(
       ref: "Seller",
     },
     price: {
-      required: true,
+     
       type: Number,
     },
     discount: {
@@ -58,6 +58,7 @@ const productSchema = new mongoose.Schema(
     },
     actualPrice: {
       type: Number,
+      required: true,
     },
     ratings: [
       {
@@ -92,9 +93,9 @@ const productSchema = new mongoose.Schema(
 productSchema.pre("save", async function (next) {
   if (!this.isModified("discount"))return next();
 
-  const discountAmount=Math.floor((this.discount/100)*this.price)
+  const discountAmount=Math.floor((this.discount/100)*this.actualPrice)
 
-  this.actualPrice = Math.floor(this.price-discountAmount);
+  this.price = Math.floor(this.actualPrice-discountAmount);
   next();
 });
 
