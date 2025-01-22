@@ -59,7 +59,6 @@ const productSchema = new mongoose.Schema(
     actualPrice: {
       type: Number,
     },
-    addresses: [addressSchema],
     ratings: [
       {
         rating: {
