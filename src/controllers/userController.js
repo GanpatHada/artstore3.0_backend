@@ -4,7 +4,8 @@ const ApiResponse = require("../utils/ApiResponse.js");
 const User = require("../models/user.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
-const jwt=require("jsonwebtoken")
+const jwt=require("jsonwebtoken");
+const { none } = require("../middlewares/multer.js");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -92,7 +93,8 @@ const loginUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    sameSite:'None',
   };
   return res
     .status(200)
@@ -126,7 +128,8 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
   const options={
     httpOnly:true,
     secure:true,
-    maxAge: 30 * 24 * 60 * 60 * 1000
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    sameSite:'None',
   }
 
   const{refreshToken,accessToken}=await generateAccessAndRefreshToken(user._id);
@@ -156,7 +159,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    sameSite:'None',
   };
   return res
     .status(200)
