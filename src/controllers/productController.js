@@ -58,26 +58,24 @@ const addProduct = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, newProduct, "Product added successfully!"));
 });
 
-// async function getProducts(){
-//   try {
-//     const products=await Product.find();
-//     if(products)
-//       return {status:200,message:"products fetched successfully",success:true,data:products};
-//     return {status:401,message:"products not found",success:false,data:{}}
-//   } catch (error) {
-//     throw error;
-//   }
-// }
+const getProducts=asyncHandler(async(_,res)=>{
+  const products=await Product.find();
+  if(products)
+    return res.status(201).json(new ApiResponse(201,products,'Products fetched successfully'));
+  else
+    throw new ApiError(401,"Something went wrong while fetching products");
+})
 
-// async function getProductsWithDiscount(discount){
-//   let discountInNumber=Number(discount)
-//   try {
-//     const products=await Product.find({discount: { $gte: discountInNumber}})
-//     return {status:200,message:"products fetched successfully",success:true,data:products}
-//   } catch (error) {
-//     throw error;
-//   }
-// }
+
+const getProductDetails=asyncHandler(async(req,res)=>{
+  const {productId}=req.params;
+  const product=await Product.findById(productId);
+  if(product)
+    return res.status(201).json(new ApiResponse(201,product,'Product Details fetched successfully'));
+  else
+    throw new ApiError(401,"Something went wrong while fetching product details");
+})
+
 
 // async function getProductDetails(productId){
 //   try {
@@ -90,4 +88,4 @@ const addProduct = asyncHandler(async (req, res) => {
 //   }
 // }
 
-module.exports = { addProduct };
+module.exports = { addProduct,getProducts,getProductDetails};
