@@ -193,20 +193,20 @@ const addToCart = asyncHandler(async (req, res) => {
   if (!product) {
     throw new ApiError(400, "Product not found");
   }
-  const user = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     userId,
     { $addToSet: { cart: productId } },
 
     {
       new: true,
     }
-  ).populate("cart");
+  )
   return res
     .status(201)
     .json(
       new ApiResponse(
         201,
-        { cart: user.cart },
+        productId,
         "Product has been added to cart"
       )
     );
@@ -223,20 +223,20 @@ const deleteFromCart = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Product not found");
   }
 
-  const user = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     userId,
     { $pull: { cart: productId } },
 
     {
       new: true,
     }
-  ).populate("cart");
+  )
   return res
     .status(201)
     .json(
       new ApiResponse(
         201,
-        { cart: user.cart },
+        productId,
         "Product has been removed from cart"
       )
     );
@@ -255,7 +255,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
   if (!product) {
     throw new ApiError(400, "Product not found");
   }
-  const user = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     userId,
     { $addToSet: { wishlist: productId } },
 
@@ -268,7 +268,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        { wishlist: user.wishlist },
+        productId,
         "Product has been added to Wishlist"
       )
     );
@@ -285,7 +285,7 @@ const deleteFromWishlist = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Product not found");
   }
 
-  const user = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     userId,
     { $pull: { wishlist: productId } },
 
@@ -298,7 +298,7 @@ const deleteFromWishlist = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        { wishlist: user.wishlist },
+        productId,
         "Product has been removed from wishlist"
       )
     );
