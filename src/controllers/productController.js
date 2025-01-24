@@ -69,23 +69,16 @@ const getProducts=asyncHandler(async(_,res)=>{
 
 const getProductDetails=asyncHandler(async(req,res)=>{
   const {productId}=req.params;
-  const product=await Product.findById(productId);
-  if(product)
+  try {
+    const product=await Product.findById(productId);
     return res.status(201).json(new ApiResponse(201,product,'Product Details fetched successfully'));
-  else
+  } catch (error) {
     throw new ApiError(401,"Something went wrong while fetching product details");
+  }
+    
 })
 
 
-// async function getProductDetails(productId){
-//   try {
-//     const product=await Product.findById(productId).populate({path:"reviews.userId",select:"userName email"});
-//     if(product)
-//       return {status:200,message:"product details fetched successfully",success:true,data:product}
-//     return {status:401,message:"product details not found",success:false,data:null}
-//   } catch (error) {
-//     throw error;
-//   }
-// }
+
 
 module.exports = { addProduct,getProducts,getProductDetails};
