@@ -4,8 +4,10 @@ const ApiResponse = require("../utils/ApiResponse.js");
 const User = require("../models/user.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
-const jwt=require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const { none } = require("../middlewares/multer.js");
+const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty } = require("../helpers/address.helper.js");
+const { default: mongoose } = require("mongoose");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -28,7 +30,7 @@ const registerUser = asyncHandler(async (req, res) => {
   //check empty and missing fields
   if (
     [fullName, email, password, phone].some(
-      (field) =>field?.trim().length === 0
+      (field) => field?.trim().length === 0
     )
   ) {
     throw new ApiError(400, "required fields either empty or missing");
@@ -68,11 +70,7 @@ const loginUser = asyncHandler(async (req, res) => {
   //check for empty and missing fields
   const { email, password } = req.body;
   console.log(email, password);
-  if (
-    [email, password].some(
-      (field) =>field?.trim().length === 0
-    )
-  ) {
+  if ([email, password].some((field) => field?.trim().length === 0)) {
     throw new ApiError(400, "required fields either empty or missing");
   }
   const userFound = await User.findOne({ email });
@@ -94,7 +92,7 @@ const loginUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
     maxAge: 30 * 24 * 60 * 60 * 1000,
-    sameSite:'None',
+    sameSite: "None",
   };
   return res
     .status(200)
@@ -106,40 +104,49 @@ const loginUser = asyncHandler(async (req, res) => {
         {
           accessToken,
           refreshToken,
-          loggedInuser
+          loggedInuser,
         },
         "user logged in successfully"
       )
     );
 });
 
-const refreshAccessToken=asyncHandler(async(req,res)=>{
-  const incommingRefreshToken=req.cookies.refreshToken || req.body.refreshToken;
-  if(!incommingRefreshToken)
-    throw new ApiError(401,"unauthorized request");
-  const decodedToken=jwt.verify(incommingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
-  const userId=decodedToken._id;
-  const user=await User.findById(userId);
-  if(!user)
-    throw new ApiError(401,"Invalid refresh token")
-  if(incommingRefreshToken!==user?.refreshToken)
-    throw new ApiError(401,"Refresh Token is expired");
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incommingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+  if (!incommingRefreshToken) throw new ApiError(401, "unauthorized request");
+  const decodedToken = jwt.verify(
+    incommingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+  const userId = decodedToken._id;
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(401, "Invalid refresh token");
+  if (incommingRefreshToken !== user?.refreshToken)
+    throw new ApiError(401, "Refresh Token is expired");
 
-  const options={
-    httpOnly:true,
-    secure:true,
+  const options = {
+    httpOnly: true,
+    secure: true,
     maxAge: 30 * 24 * 60 * 60 * 1000,
-    sameSite:'None',
-  }
+    sameSite: "None",
+  };
 
-  const{refreshToken,accessToken}=await generateAccessAndRefreshToken(user._id);
-  return res.status(200)
-  .cookie("accessToken",accessToken,options)
-  .cookie("refreshToken",refreshToken,options)
-  .json(new ApiResponse(200,{refreshToken,accessToken},"Access token refreshed"))
-
-
-})
+  const { refreshToken, accessToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        { refreshToken, accessToken },
+        "Access token refreshed"
+      )
+    );
+});
 
 const logoutUser = asyncHandler(async (req, res) => {
   const loggedInuser = await User.findByIdAndUpdate(
@@ -160,7 +167,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
     maxAge: 30 * 24 * 60 * 60 * 1000,
-    sameSite:'None',
+    sameSite: "None",
   };
   return res
     .status(200)
@@ -171,16 +178,22 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 //details
 
-const getLoggedInUserDetails=asyncHandler(async(req,res)=>{
-   const userId=req._id;
-   const user=await User.findById(userId).select("-password -refreshToken");
-   if(!user)
-   {
-    throw new ApiError(400,"user not found")
-   }
-   return res.status(200).json(new ApiResponse(200,{user,userRole:'USER'},"user details fetched successfully"))
-})
-
+const getLoggedInUserDetails = asyncHandler(async (req, res) => {
+  const userId = req._id;
+  const user = await User.findById(userId).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError(400, "user not found");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { user, userRole: "USER" },
+        "user details fetched successfully"
+      )
+    );
+});
 
 //cart
 
@@ -200,16 +213,10 @@ const addToCart = asyncHandler(async (req, res) => {
     {
       new: true,
     }
-  )
+  );
   return res
     .status(201)
-    .json(
-      new ApiResponse(
-        201,
-        productId,
-        "Product has been added to cart"
-      )
-    );
+    .json(new ApiResponse(201, productId, "Product has been added to cart"));
 });
 
 const deleteFromCart = asyncHandler(async (req, res) => {
@@ -230,19 +237,13 @@ const deleteFromCart = asyncHandler(async (req, res) => {
     {
       new: true,
     }
-  )
+  );
   return res
     .status(201)
     .json(
-      new ApiResponse(
-        201,
-        productId,
-        "Product has been removed from cart"
-      )
+      new ApiResponse(201, productId, "Product has been removed from cart")
     );
 });
-
-
 
 //wishlist
 
@@ -266,11 +267,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(
-      new ApiResponse(
-        201,
-        productId,
-        "Product has been added to Wishlist"
-      )
+      new ApiResponse(201, productId, "Product has been added to Wishlist")
     );
 });
 
@@ -296,13 +293,132 @@ const deleteFromWishlist = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(
-      new ApiResponse(
-        201,
-        productId,
-        "Product has been removed from wishlist"
-      )
+      new ApiResponse(201, productId, "Product has been removed from wishlist")
     );
 });
+
+//addresses
+
+const addAddress = asyncHandler(async (req, res) => {
+  const {
+    receiverName,
+    mobileNumber,
+    pinCode,
+    address1,
+    address2,
+    landmark,
+    city,
+    state,
+    country,
+  } = req.body;
+  if (
+    [
+      receiverName,
+      mobileNumber,
+      pinCode,
+      address1,
+      address2,
+      city,
+      state,
+      country,
+    ].some((field) => field?.trim().length === 0)
+  )
+    throw new ApiError(400, "required fields either empty or missing");
+  const user=await User.findByIdAndUpdate(
+    req._id,
+    {
+      $addToSet: {
+        addresses: {
+          receiverName,
+          mobileNumber,
+          pinCode,
+          address1,
+          address2,
+          landmark: landmark || "",
+          city,
+          state,
+          country,
+        },
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  const recentAddressObj=user.addresses[user.addresses.length-1];
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, recentAddressObj, "Address added successfully")
+  );
+
+
+});
+
+const deleteAddress=asyncHandler(async(req,res)=>{
+  const {addressId}=req.params;
+  if(!addressId)
+    throw new ApiError(400,"addressId not found")
+  const user=await User.findById(req._id);
+  if(!user)
+    throw new ApiError(400,"user not found");
+  user.addresses=user.addresses.filter(address=>address._id.toString()!==addressId);
+  await user.save();
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, addressId, "address deleted successfully")
+    );
+})
+
+const makePrimaryAddress=asyncHandler(async(req,res)=>{
+  const {addressId}=req.params;
+  if(!addressId)
+    throw new ApiError(400,"addressId not found")
+  const user=await User.findById(req._id);
+  if(!user)
+    throw new ApiError(400,"user not found");
+  const requiredAddress=user.addresses.find(address=>address._id.toString()===addressId);
+  if(!requiredAddress)
+    throw new ApiError(400,"address not found");
+  const remainingAddressArray=user.addresses.filter(address=>address._id.toString()!==addressId);
+  user.addresses=[requiredAddress,...remainingAddressArray];
+  await user.save();
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, addressId, "address has been marked as primary address")
+    );
+})
+
+
+const editAddress=asyncHandler(async(req,res)=>{
+  const {addressId}=req.params;
+  if(!addressId)
+    throw new ApiError(400,"addressId not found");
+  const requiredFields=extractRequiredAddressFields(req.body);
+  const areFieldsEmptyOrMissing=checkRequiredFieldsMissingOrEmpty(requiredFields);
+  if(areFieldsEmptyOrMissing)
+    throw new ApiError(400, "required fields either empty or missing");
+  const user=await User.findById(req._id);
+  if(!user)
+    throw new ApiError(400,"user not found");
+  const requiredAddress=user.addresses.find(address=>address._id.toString()===addressId);
+  const newAddress={...requiredAddress,...requiredFields,landmark:req.body.landmark || ""}
+  const updatedAddressArray=user.addresses.map(address=>{
+    if(address._id.toString()===addressId)
+      return newAddress;
+    return address;
+  })
+  user.addresses=updatedAddressArray;
+  await user.save();
+  const updatedAddress=user.addresses.find(address=>address._id.toString()===addressId);
+  return res
+  .status(201)
+  .json(
+    new ApiResponse(201,updatedAddress, "address has been updated")
+  );
+})
 
 module.exports = {
   registerUser,
@@ -313,5 +429,9 @@ module.exports = {
   addToCart,
   deleteFromCart,
   addToWishlist,
-  deleteFromWishlist
+  deleteFromWishlist,
+  addAddress,
+  deleteAddress,
+  makePrimaryAddress,
+  editAddress
 };

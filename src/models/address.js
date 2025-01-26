@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const addressSchema=new mongoose.Schema({
-    name:{
+    receiverName:{
         type:String,
         required:true,
         default:""
@@ -22,6 +22,7 @@ const addressSchema=new mongoose.Schema({
         default:""
     },
     address2:{
+        required:true,
         type:String,
         default:""
     },
