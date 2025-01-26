@@ -1,4 +1,4 @@
-export function extractRequiredAddressFields(AddressObj)
+function extractRequiredAddressFields(AddressObj)
 {
     const{receiverName,
         mobileNumber,
@@ -18,8 +18,9 @@ export function extractRequiredAddressFields(AddressObj)
             country}
 }
 
-export function checkRequiredFieldsMissingOrEmpty(requiredFields)
+function checkRequiredFieldsMissingOrEmpty(requiredFields)
 {
     console.log(requiredFields)
     return Object.values(requiredFields).some(field=>field === undefined || field.trim().length===0)
 }
+module.exports={extractRequiredAddressFields,checkRequiredFieldsMissingOrEmpty}

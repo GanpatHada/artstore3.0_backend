@@ -5,7 +5,6 @@ const User = require("../models/user.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
-const { none } = require("../middlewares/multer.js");
 const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty } = require("../helpers/address.helper.js");
 
 const generateAccessAndRefreshToken = async (userId) => {
