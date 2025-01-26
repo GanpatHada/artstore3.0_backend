@@ -23,4 +23,3 @@ export function checkRequiredFieldsMissingOrEmpty(requiredFields)
     console.log(requiredFields)
     return Object.values(requiredFields).some(field=>field === undefined || field.trim().length===0)
 }
-

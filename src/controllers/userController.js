@@ -7,7 +7,6 @@ const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
 const { none } = require("../middlewares/multer.js");
 const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty } = require("../helpers/address.helper.js");
-const { default: mongoose } = require("mongoose");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
