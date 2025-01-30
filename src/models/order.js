@@ -6,15 +6,11 @@ const OrderSchema = new mongoose.Schema({
     required:true,
     type:'String'
   },
-  payment_orderId:{
+  paymentId:{
     required:true,
     type:String,
   },
-  paymentId:{
-    required:true,
-    type:String
-  },
-  userId:{
+  customerId:{
     required:true,
     type:mongoose.Types.ObjectId,
     ref:"User"
@@ -30,8 +26,6 @@ const OrderSchema = new mongoose.Schema({
   },
   address:addressSchema,
   signature:String
-
-  
 },{
   timestamps:true
 });

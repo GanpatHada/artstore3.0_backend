@@ -8,8 +8,8 @@ const cookieParser = require('cookie-parser')
 const userRouter = require("./src/routes/userRoute.js");
 const homeRouter = require("./src/routes/homeRoute.js");
 const productRouter = require("./src/routes/productRoute.js");
-// const paymentRouter = require("./src/routes/PaymentRoute.js");
 const sellerRouter=require("./src/routes/sellerRoute.js");
+const orderRouter=require("./src/routes/orderRoute.js")
 const errorHandler = require("./src/middlewares/errorhandler.js");
 
 app.use(express.json({limit:'16kb'}));
@@ -26,7 +26,8 @@ app.use("/", homeRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/seller",sellerRouter)
 app.use("/api/v1/products",productRouter);
-// app.use("/api/v1/payment",paymentRouter);
+app.use("/api/v1/order",orderRouter)
+
 
 app.use(errorHandler);
 
