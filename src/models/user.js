@@ -3,6 +3,8 @@ const { addressSchema } = require("./address");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+
+
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -42,6 +44,10 @@ const userSchema = new mongoose.Schema(
         ref: "Product",
       },
     ],
+    myOrders:[{
+      type:mongoose.Types.ObjectId,
+      ref:"Order"
+    }]
   },
   {
     timestamps: true,

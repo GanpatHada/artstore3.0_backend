@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { addressSchema } = require("./address");
 
 const productSchema = new mongoose.Schema(
   {
@@ -49,7 +48,6 @@ const productSchema = new mongoose.Schema(
       ref: "Seller",
     },
     price: {
-     
       type: Number,
     },
     discount: {
@@ -59,6 +57,11 @@ const productSchema = new mongoose.Schema(
     actualPrice: {
       type: Number,
       required: true,
+    },
+    isSold: {
+      required: true,
+      type: Boolean,
+      default: false,
     },
     ratings: [
       {
@@ -86,16 +89,17 @@ const productSchema = new mongoose.Schema(
         },
       },
     ],
+    tags: [{ type: String , enum:["DEAL OF THE DAY","ARTSTORE PRIME"]}],
   },
   { timestamps: true }
 );
 
 productSchema.pre("save", async function (next) {
-  if (!this.isModified("discount"))return next();
+  if (!this.isModified("discount")) return next();
 
-  const discountAmount=Math.floor((this.discount/100)*this.actualPrice)
+  const discountAmount = Math.floor((this.discount / 100) * this.actualPrice);
 
-  this.price = Math.floor(this.actualPrice-discountAmount);
+  this.price = Math.floor(this.actualPrice - discountAmount);
   next();
 });
 

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { addressSchema } = require("./address");
 
 const OrderSchema = new mongoose.Schema({
   orderId:{
@@ -10,7 +9,7 @@ const OrderSchema = new mongoose.Schema({
     required:true,
     type:String,
   },
-  customerId:{
+  buyerId:{
     required:true,
     type:mongoose.Types.ObjectId,
     ref:"User"
@@ -20,11 +19,10 @@ const OrderSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "Product",
   }],
-  amount:{
+  shippingAddress:{
     required:true,
-    type:Number
+    type:String
   },
-  address:addressSchema,
   signature:String
 },{
   timestamps:true
