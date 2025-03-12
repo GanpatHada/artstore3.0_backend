@@ -6,14 +6,35 @@ const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
 const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty } = require("../helpers/address.helper.js");
+const { cookieOptions } = require("../helpers/auth.helpers.js");
 
-const generateAccessAndRefreshToken = async (userId) => {
+
+const generateAccessToken=async(userId)=>{
+  try {
+    const user = await User.findById(userId);
+    const accessToken = await user.generateAccessToken();
+    return accessToken;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const generateRefreshToken=async(userId)=>{
   try {
     const user = await User.findById(userId);
     const refreshToken = await user.generateRefreshToken();
-    const accessToken = await user.generateAccessToken();
-    user.refreshToken = refreshToken;
+    user.refreshToken  = refreshToken;
     await user.save({ validateBeforeSave: false });
+    return refreshToken;
+  } catch (error) {
+    throw error;
+  }
+}
+
+const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const refreshToken = await generateRefreshToken(userId);
+    const accessToken  =  await generateAccessToken(userId);
     return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(500, "Something went wrong while generating token");
@@ -25,52 +46,22 @@ const generateAccessAndRefreshToken = async (userId) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
 
-  //check empty and missing fields
-  if (
-    [fullName, email, password, phone].some(
-      (field) => field?.trim().length === 0
-    )
-  ) {
-    throw new ApiError(400, "required fields either empty or missing");
-  }
-
   //user already exists
   const isAccountExistsAlready = await User.findOne({ email });
   if (isAccountExistsAlready) {
     throw new ApiError(409, "user with this email already exists");
   }
 
-  //save profileImage
-  const profileImagePath = req.file?.path;
-  let profileImageUrl;
-  if (profileImagePath) {
-    profileImageUrl = await uploadOnCloudinary(profileImagePath);
-  }
-  const user = await User.create({
-    email,
-    password,
-    fullName,
-    profileImage: profileImageUrl || null,
-    phone,
-  });
-  const createduser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
+  const user = await User.create({email,password,fullName,phone,});
+  const createduser = await User.findById(user._id).select("-password -refreshToken");
   if (!createduser) {
     throw new ApiError(500, "Something went wrong while creating user Account");
   }
-  return res
-    .status(201)
-    .json(new ApiResponse(200, createduser, "user registered successfully"));
+  return res.status(201).json(new ApiResponse(200, createduser, "user registered successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  //check for empty and missing fields
   const { email, password } = req.body;
-  console.log(email, password);
-  if ([email, password].some((field) => field?.trim().length === 0)) {
-    throw new ApiError(400, "required fields either empty or missing");
-  }
   const userFound = await User.findOne({ email });
   if (!userFound) {
     throw new ApiError(409, "account does not exist with this email");
@@ -83,64 +74,42 @@ const loginUser = asyncHandler(async (req, res) => {
     userFound._id
   );
   const loggedInuser = await User.findById(userFound._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken -_id -createdAt -updatedAt -__v"
   );
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    sameSite: "None",
-  };
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          accessToken,
-          refreshToken,
-          loggedInuser,
-        },
-        "user logged in successfully"
-      )
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(new ApiResponse(200,{accessToken,user:loggedInuser,},"user logged in successfully")
     );
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incommingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
-  if (!incommingRefreshToken) throw new ApiError(401, "unauthorized request");
+  const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+  if (!incommingRefreshToken) 
+    throw new ApiError(401, "unauthorized request");
   const decodedToken = jwt.verify(
     incommingRefreshToken,
     process.env.REFRESH_TOKEN_SECRET
   );
   const userId = decodedToken._id;
   const user = await User.findById(userId);
-  if (!user) throw new ApiError(401, "Invalid refresh token");
+  if (!user) 
+    throw new ApiError(401, "Invalid refresh token");
   if (incommingRefreshToken !== user?.refreshToken)
     throw new ApiError(401, "Refresh Token is expired");
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    sameSite: "None",
-  };
-
-  const { refreshToken, accessToken } = await generateAccessAndRefreshToken(
-    user._id
+    //logout from here
+  
+  const accessToken = await generateAccessToken(user._id);
+  const loggedInuser = await User.findById(user._id).select(
+    "-password -refreshToken -_id -createdAt -updatedAt -__v"
   );
+
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
     .json(
       new ApiResponse(
         200,
-        { refreshToken, accessToken },
+        {accessToken,user:loggedInuser},
         "Access token refreshed"
       )
     );
@@ -161,16 +130,9 @@ const logoutUser = asyncHandler(async (req, res) => {
   if (!loggedInuser) {
     throw new ApiError(401, "user not found");
   }
-  const options = {
-    httpOnly: true,
-    secure: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-    sameSite: "None",
-  };
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("refreshToken", cookieOptions)
     .json(new ApiResponse(200, {}, "user logged out successfully"));
 });
 

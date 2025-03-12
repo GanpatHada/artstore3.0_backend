@@ -16,10 +16,12 @@ const {
 } = require("../controllers/userController");
 const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
+const validateRequest = require("../middlewares/validateRequest.js");
+const { loginValidation, registerValidation } = require("../validations/user.validation.js");
 const router = express.Router();
 
-router.route("/register").post(upload.single("profileImage"), registerUser);
-router.route("/login").post(loginUser);
+router.route("/register").post(validateRequest(registerValidation), registerUser);
+router.route("/login").post(validateRequest(loginValidation),loginUser);
 router.route("/refreshAccessToken").post(refreshAccessToken);
 
 //authorized routes

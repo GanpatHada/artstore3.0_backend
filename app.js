@@ -2,7 +2,9 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const app = express();
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const isProduction = process.env.NODE_ENV === 'production';
+
 
 
 const userRouter = require("./src/routes/userRoute.js");
@@ -18,7 +20,7 @@ app.use(express.static('public'));
 app.use(cookieParser())
 app.use(helmet());
 app.use(cors({
-    origin: "http://localhost:3000",  
+    origin: isProduction ? 'https://artstore3-0-backend-1.onrender.com' : 'http://localhost:3000', 
     credentials: true,  
   }));
 

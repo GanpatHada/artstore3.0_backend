@@ -4,9 +4,9 @@ function errorHandler(error, req, res, next) {
     .status(error.statusCode || 500)
     .json({
       message: error.message,
-      data: error.data,
+      error: error.data,
       success: error.success,
-      code :error.code
+      status:error.statusCode || 500
     });
 }
 module.exports = errorHandler;
