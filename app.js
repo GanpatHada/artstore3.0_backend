@@ -20,7 +20,7 @@ app.use(express.static('public'));
 app.use(cookieParser())
 app.use(helmet());
 app.use(cors({
-    origin: isProduction ? 'https://artstore3-0-backend-1.onrender.com' : 'http://localhost:3000', 
+    origin: isProduction ? 'https://artstoreonline.vercel.app' : 'http://localhost:3000', 
     credentials: true,  
   }));
 
