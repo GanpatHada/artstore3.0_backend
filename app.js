@@ -3,7 +3,11 @@ const helmet = require("helmet");
 const cors = require("cors");
 const app = express();
 const cookieParser = require('cookie-parser');
-const isProduction = process.env.NODE_ENV === 'production';
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://artstoreonline.vercel.app",
+];
 
 
 
@@ -20,7 +24,7 @@ app.use(express.static('public'));
 app.use(cookieParser())
 app.use(helmet());
 app.use(cors({
-    origin: isProduction ? 'https://artstoreonline.vercel.app' : 'http://localhost:3000', 
+    origin: allowedOrigins, 
     credentials: true,  
   }));
 
