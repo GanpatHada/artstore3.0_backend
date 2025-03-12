@@ -4,12 +4,6 @@ const cors = require("cors");
 const app = express();
 const cookieParser = require('cookie-parser');
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://artstoreonline.vercel.app",
-];
-
-
 
 const userRouter = require("./src/routes/userRoute.js");
 const homeRouter = require("./src/routes/homeRoute.js");
@@ -24,7 +18,7 @@ app.use(express.static('public'));
 app.use(cookieParser())
 app.use(helmet());
 app.use(cors({
-    origin: allowedOrigins, 
+    origin: "http://localhost:3000", 
     credentials: true,  
   }));
 
