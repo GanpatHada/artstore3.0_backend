@@ -69,7 +69,17 @@ const getProducts=asyncHandler(async(_,res)=>{
 const getProductDetails=asyncHandler(async(req,res)=>{
   const {productId}=req.params;
   try {
-    const product=await Product.findById(productId).populate('artist','fullName averageRatings reviews');
+    const product=await Product.findById(productId).populate({
+			path: 'artist',
+      select:'_id fullName reviews',
+			populate: {
+				path: 'reviews',
+				populate: {
+					path: 'user',
+          select:'fullName'
+				},
+			},
+		});
     if(!product)
       throw new ApiError(400,"Product not found")
     return res.status(201).json(new ApiResponse(201,product,'Product Details fetched successfully'));

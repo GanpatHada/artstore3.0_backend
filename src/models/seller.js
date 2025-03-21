@@ -39,7 +39,11 @@ const sellerSchema = new mongoose.Schema(
         ref:'User'
       },
       userReview:String,
-      userRatings:Number
+      userRatings:Number,
+      createdAt:{
+        type:Date,
+        default:Date.now()
+      }
     }],
     isVerified: {
       type: Boolean,
