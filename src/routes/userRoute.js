@@ -13,11 +13,12 @@ const {
   deleteAddress,
   makePrimaryAddress,
   editAddress,
+  postSellerReview,
 } = require("../controllers/userController");
 const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
 const validateRequest = require("../middlewares/validateRequest.js");
-const { loginValidation, registerValidation } = require("../validations/user.validation.js");
+const { loginValidation, registerValidation, reviewValidation } = require("../validations/user.validation.js");
 const router = express.Router();
 
 router.route("/register").post(validateRequest(registerValidation), registerUser);
@@ -36,5 +37,6 @@ router.route("/address/:addressId").delete(verifyJwt,deleteAddress)
 router.route("/address/makePrimary/:addressId").post(verifyJwt,makePrimaryAddress)
 router.route("/userDetails").get(verifyJwt,getLoggedInUserDetails)
 router.route("/address/:addressId").patch(verifyJwt,editAddress)
+router.route("/review").put(verifyJwt,validateRequest(reviewValidation),postSellerReview)
 
 module.exports = router;

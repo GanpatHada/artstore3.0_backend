@@ -39,4 +39,20 @@ const registerValidation = Joi.object({
     }),
 });
 
-module.exports = { loginValidation, registerValidation };
+const reviewValidation = Joi.object({
+  sellerId:Joi.string().trim().required().messages({
+    "string.empty": "sellerId cannot be empty.",
+    "any.required": "sellerId is required.",
+  }),
+  userRatings: Joi.number().min(0).max(5).required().messages({
+    "number.base": "User rating must be a number.",
+    "number.min": "User rating cannot be less than 0.",
+    "number.max": "User rating cannot be more than 5.",
+  }),
+  userReview: Joi.string().trim().required().messages({
+    "string.empty": "User review cannot be empty.",
+    "any.required": "User review is required.",
+  }),
+});
+
+module.exports = { loginValidation, registerValidation,reviewValidation};

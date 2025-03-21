@@ -2,10 +2,12 @@ const express = require("express");
 const { registerSeller, loginSeller, logoutSeller } = require("../controllers/sellerController");
 const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
+const validateRequest = require("../middlewares/validateRequest.js");
+const { registerValidation, loginValidation } = require("../validations/user.validation.js");
 const router = express.Router();
 
-router.route("/signup").post(upload.single("profileImage"), registerSeller);
-router.route("/login").post(loginSeller)
+router.route("/register").post(validateRequest(registerValidation), registerSeller);
+router.route("/login").post(validateRequest(loginValidation), loginSeller)
 
 
 //authorized routes

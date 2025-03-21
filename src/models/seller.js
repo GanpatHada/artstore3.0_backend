@@ -27,11 +27,20 @@ const sellerSchema = new mongoose.Schema(
     },
     profileImage: {
       type: String,
+      default:null
     },
-    ratings: {
-      type: Number,
-      default: 0,
+    averageRatings:{
+      type:Number,
+      default:0
     },
+    reviews:[{
+      user:{
+        type:mongoose.Types.ObjectId,
+        ref:'User'
+      },
+      userReview:String,
+      userRatings:Number
+    }],
     isVerified: {
       type: Boolean,
       default: false,
@@ -44,9 +53,14 @@ const sellerSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-sellerSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+sellerSchema.pre("save", function (next) {
+  if (this.isModified("password"))
+      this.password = bcrypt.hash(this.password, 10);
+
+  if (this.isModified("reviews")) {
+     const total = this.reviews.reduce((sum, review) => sum + review.userRatings, 0);
+     this.averageRatings = total / this.reviews.length;
+  } 
   next();
 });
 

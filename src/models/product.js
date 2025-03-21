@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema(
@@ -23,6 +24,10 @@ const productSchema = new mongoose.Schema(
         required: true,
         type: Number,
       },
+      thickness:{
+        required:true,
+        type:Number
+      }
     },
     category: {
       required: true,
@@ -44,8 +49,8 @@ const productSchema = new mongoose.Schema(
     },
     artist: {
       required: true,
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Seller",
+      type: mongoose.Types.ObjectId,
+      ref: "Seller", 
     },
     price: {
       type: Number,
@@ -63,33 +68,19 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    ratings: [
-      {
-        rating: {
-          required: true,
-          type: Number,
-        },
-        userId: {
-          required: true,
-          type: mongoose.Types.ObjectId,
-          ref: "User",
-        },
-      },
-    ],
-    reviews: [
-      {
-        review: {
-          required: true,
-          type: String,
-        },
-        userId: {
-          required: true,
-          type: mongoose.Types.ObjectId,
-          ref: "User",
-        },
-      },
-    ],
-    tags: [{ type: String , enum:["DEAL OF THE DAY","ARTSTORE PRIME"]}],
+    weight:{
+      required:true,
+      type:Number
+    },
+    medium:{
+      required:true,
+      type:String
+    },
+    surface:{
+      required:true,
+      type:String
+    },
+    tags: [{ type: String , enum:["LIMITED TIME DEAL","ARTSTORE PRIME"]}],
   },
   { timestamps: true }
 );

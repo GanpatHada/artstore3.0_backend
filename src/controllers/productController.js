@@ -5,8 +5,7 @@ const asyncHandler = require("../utils/asynchandler");
 const uploadOnCloudinary = require("../utils/cloudinary");
 
 const addProduct = asyncHandler(async (req, res) => {
-  const { title, description, heightInCm, widthInCm, category, price,discount} =
-    req.body;
+  const { title, description, heightInCm, widthInCm, category, price,discount} = req.body;
 
   //check for missing and empty fields
 
@@ -70,7 +69,9 @@ const getProducts=asyncHandler(async(_,res)=>{
 const getProductDetails=asyncHandler(async(req,res)=>{
   const {productId}=req.params;
   try {
-    const product=await Product.findById(productId);
+    const product=await Product.findById(productId).populate('artist','fullName averageRatings reviews');
+    if(!product)
+      throw new ApiError(400,"Product not found")
     return res.status(201).json(new ApiResponse(201,product,'Product Details fetched successfully'));
   } catch (error) {
     throw new ApiError(401,"Something went wrong while fetching product details");

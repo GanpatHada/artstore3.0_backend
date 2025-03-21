@@ -2,11 +2,14 @@ const asyncHandler = require("../utils/asynchandler.js");
 const ApiError = require("../utils/ApiError.js");
 const ApiResponse = require("../utils/ApiResponse.js");
 const User = require("../models/user.js");
+const Seller = require("../models/seller.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
 const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty } = require("../helpers/address.helper.js");
 const { cookieOptions } = require("../helpers/auth.helpers.js");
+const seller = require("../models/seller.js");
+const { default: mongoose } = require("mongoose");
 
 
 const generateAccessToken=async(userId)=>{
@@ -380,6 +383,34 @@ const editAddress=asyncHandler(async(req,res)=>{
   );
 })
 
+
+//seller related routes
+
+const postSellerReview=asyncHandler(async(req,res)=>{
+  console.log(req._id)
+  const{sellerId,userReview,userRatings}=req.body;
+  const seller=await Seller.findById(sellerId);
+  if(!seller)
+    throw new ApiError(400,"Seller not found");
+
+  const newReview = {
+    _id: new mongoose.Types.ObjectId(),
+    userRatings,
+    userReview,
+    user:req._id,
+    createdAt: new Date(),
+  };
+
+  seller.reviews.push(newReview);
+  await seller.save();
+  return res
+  .status(201)
+  .json(
+    new ApiResponse(201,newReview, "review posted successfully")
+  );
+
+})
+
 module.exports = {
   registerUser,
   loginUser,
@@ -393,5 +424,6 @@ module.exports = {
   addAddress,
   deleteAddress,
   makePrimaryAddress,
-  editAddress
+  editAddress,
+  postSellerReview
 };

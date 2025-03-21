@@ -3,31 +3,42 @@ const ApiError = require("../utils/ApiError.js");
 const ApiResponse = require("../utils/ApiResponse.js");
 const Seller = require("../models/seller.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
+const { cookieOptions } = require("../helpers/auth.helpers.js");
 
-const generateAccessAndRefreshToken = async (sellerId) => {
+const generateAccessToken=async(userId)=>{
   try {
-    const seller = await Seller.findById(sellerId);
-    const refreshToken = await seller.generateRefreshToken();
-    const accessToken = await seller.generateAccessToken();
-    seller.refreshToken = refreshToken;
-    await seller.save({ validateBeforeSave: false });
+    const user = await Seller.findById(userId);
+    const accessToken = await user.generateAccessToken();
+    return accessToken;
+  } catch (error) {
+    throw new Error('Something went wrong while generating access Token');
+  }
+}
+
+const generateRefreshToken=async(userId)=>{
+  try {
+    const user = await Seller.findById(userId);
+    const refreshToken = await user.generateRefreshToken();
+    user.refreshToken  = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    return refreshToken;
+  } catch (error) {
+    throw new Error('Something went wrong while generating refresh Token');
+  }
+}
+
+const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const refreshToken = await generateRefreshToken(userId);
+    const accessToken  =  await generateAccessToken(userId);
     return { accessToken, refreshToken };
   } catch (error) {
-    throw new ApiError(500, "Something went wrong while generating token");
+    throw error
   }
 };
 
 const registerSeller = asyncHandler(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
-
-  //check empty and missing fields
-  if (
-    [fullName, email, password, phone].some(
-      (field) =>field?.trim().length === 0
-    )
-  ) {
-    throw new ApiError(400, "required fields either empty or missing");
-  }
 
   //seller already exists
   const isAccountExistsAlready = await Seller.findOne({ email });
@@ -35,45 +46,18 @@ const registerSeller = asyncHandler(async (req, res) => {
     throw new ApiError(409, "seller with this email already exists");
   }
 
-  //save profileImage
-  const profileImagePath = req.file?.path;
-  let profileImageUrl;
-  if (profileImagePath) {
-    profileImageUrl = await uploadOnCloudinary(profileImagePath);
-  }
-  const seller = await Seller.create({
-    email,
-    password,
-    fullName,
-    profileImage: profileImageUrl || null,
-    phone,
-  });
-  const createdSeller = await Seller.findById(seller._id).select(
-    "-password -refreshToken"
-  );
-  if (!createdSeller) {
-    throw new ApiError(
-      500,
-      "Something went wrong while creating seller Account"
-    );
-  }
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(200, createdSeller, "Seller registered successfully")
-    );
+  const seller = await Seller.create({email,password,fullName,phone});
+  const createdSeller = await Seller.findById(seller._id).select("-password -refreshToken");
+  if (!createdSeller) 
+    throw new ApiError(500,"Something went wrong while creating seller Account");
+  return res.status(201).json(new ApiResponse(200, createdSeller, "Seller registered successfully"));
 });
 
+
+
 const loginSeller = asyncHandler(async (req, res) => {
-  //check for empty and missing fields
-  const { email, password } = req.body;
-  if (
-    [email, password].some(
-      (field) => field === undefined || field.trim().length === 0
-    )
-  ) {
-    throw new ApiError(400, "required fields either empty or missing");
-  }
+  const{email,password}=req.body;
+  
   const sellerFound = await Seller.findOne({ email });
   if (!sellerFound) {
     throw new ApiError(409, "account does not exist with this email");
@@ -85,25 +69,20 @@ const loginSeller = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     sellerFound._id
   );
-  const loggedInSeller=await Seller.findById(sellerFound._id).select("-password -refreshToken")
+  const loggedInSeller=await Seller.findById(sellerFound._id).select(
+    "-password -refreshToken -_id -createdAt -updatedAt -__v"
+  );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+
   return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          seller: loggedInSeller,
-          accessToken,
-          refreshToken,
-        },
-        "seller logged in successfully"
+  .status(200).cookie("refreshToken", refreshToken, cookieOptions)
+  .json(
+    new ApiResponse(200,
+      {
+        seller: loggedInSeller,
+        accessToken,
+      },
+     "seller logged in successfully"
       )
     );
 });
