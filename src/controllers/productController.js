@@ -71,7 +71,7 @@ const getProductDetails=asyncHandler(async(req,res)=>{
   try {
     const product=await Product.findById(productId).populate({
 			path: 'artist',
-      select:'_id fullName reviews',
+      select:'_id fullName reviews averageRatings',
 			populate: {
 				path: 'reviews',
 				populate: {
