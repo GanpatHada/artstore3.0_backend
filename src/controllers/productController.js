@@ -89,7 +89,42 @@ const getProductDetails=asyncHandler(async(req,res)=>{
     
 })
 
+const getProductsUnderOneThousand=asyncHandler(async(_,res)=>{
+  try {
+    const products=await Product.find({ price: { $lt: 1000 } }).limit(4)
+    .sort({ price: 1 }).select("id productImages");
+    return res.status(200).json(new ApiResponse(200,products,'Products under one thousand fetched successfully'))
+  } catch (error) {
+    console.log(error);
+    throw new ApiError(400,'Unable to load products')
+  }
+})
+
+const getProductOnHighlyDiscount=asyncHandler(async(_,res)=>{
+  try {
+    const products=await Product.find({ discount: { $gt: 40 } }).limit(4)
+    .sort({ price: 1 }).select("id productImages");
+    return res.status(200).json(new ApiResponse(200,products,'Products which are on high discount fetched successfully'))
+  } catch (error) {
+    console.log(error);
+    throw new ApiError(400,'Unable to load products')
+  }
+})
+
+
+const getProductsOnLimitedTimeDeal=asyncHandler(async(_,res)=>{
+  try {
+    const products = await Product.find({ tags: { $in: ["Limited time deal"] } }).limit(4)
+    .sort({ price: 1 }).select("id productImages");
+    return res.status(200).json(new ApiResponse(200,products,'Limited time deal products fetched successfully'))
+  } catch (error) {
+    console.log(error);
+    throw new ApiError(400,'Unable to load products')
+  }
+  
+})
 
 
 
-module.exports = { addProduct,getProducts,getProductDetails};
+
+module.exports = { addProduct,getProducts,getProductDetails,getProductsUnderOneThousand,getProductOnHighlyDiscount, getProductsOnLimitedTimeDeal};
