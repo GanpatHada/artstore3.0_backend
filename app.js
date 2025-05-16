@@ -17,7 +17,7 @@ app.use(express.urlencoded({extended:true,limit:'16kb'}));
 app.use(express.static('public'));
 app.use(cookieParser())
 app.use(helmet());
-const allowedOrigins = ["http://localhost:3000", "https://artstoreonline.vercel.app/"];
+const allowedOrigins = ["http://localhost:3000", "https://artstoreonline.vercel.app"];
 
 app.use(cors({
   origin: function(origin, callback) {
