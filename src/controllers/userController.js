@@ -6,13 +6,15 @@ const Seller = require("../models/seller.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
-const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty } = require("../helpers/address.helper.js");
+const {
+  extractRequiredAddressFields,
+  checkRequiredFieldsMissingOrEmpty,
+} = require("../helpers/address.helper.js");
 const { cookieOptions } = require("../helpers/auth.helpers.js");
 const seller = require("../models/seller.js");
 const { default: mongoose } = require("mongoose");
 
-
-const generateAccessToken=async(userId)=>{
+const generateAccessToken = async (userId) => {
   try {
     const user = await User.findById(userId);
     const accessToken = await user.generateAccessToken();
@@ -20,24 +22,24 @@ const generateAccessToken=async(userId)=>{
   } catch (error) {
     throw error;
   }
-}
+};
 
-const generateRefreshToken=async(userId)=>{
+const generateRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
     const refreshToken = await user.generateRefreshToken();
-    user.refreshToken  = refreshToken;
+    user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
     return refreshToken;
   } catch (error) {
     throw error;
   }
-}
+};
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const refreshToken = await generateRefreshToken(userId);
-    const accessToken  =  await generateAccessToken(userId);
+    const accessToken = await generateAccessToken(userId);
     return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(500, "Something went wrong while generating token");
@@ -55,12 +57,16 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "user with this email already exists");
   }
 
-  const user = await User.create({email,password,fullName,phone,});
-  const createduser = await User.findById(user._id).select("-password -refreshToken");
+  const user = await User.create({ email, password, fullName, phone });
+  const createduser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
   if (!createduser) {
     throw new ApiError(500, "Something went wrong while creating user Account");
   }
-  return res.status(201).json(new ApiResponse(200, createduser, "user registered successfully"));
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createduser, "user registered successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -82,26 +88,30 @@ const loginUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(new ApiResponse(200,{accessToken,user:loggedInuser,},"user logged in successfully")
+    .json(
+      new ApiResponse(
+        200,
+        { accessToken, user: loggedInuser },
+        "user logged in successfully"
+      )
     );
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-  if (!incommingRefreshToken) 
-    throw new ApiError(401, "unauthorized request");
+  const incommingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+  if (!incommingRefreshToken) throw new ApiError(401, "unauthorized request");
   const decodedToken = jwt.verify(
     incommingRefreshToken,
     process.env.REFRESH_TOKEN_SECRET
   );
   const userId = decodedToken._id;
   const user = await User.findById(userId);
-  if (!user) 
-    throw new ApiError(401, "Invalid refresh token");
+  if (!user) throw new ApiError(401, "Invalid refresh token");
   if (incommingRefreshToken !== user?.refreshToken)
     throw new ApiError(401, "Refresh Token is expired");
-    //logout from here
-  
+  //logout from here
+
   const accessToken = await generateAccessToken(user._id);
   const loggedInuser = await User.findById(user._id).select(
     "-password -refreshToken -_id -createdAt -updatedAt -__v"
@@ -112,7 +122,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        {accessToken,user:loggedInuser},
+        { accessToken, user: loggedInuser },
         "Access token refreshed"
       )
     );
@@ -287,7 +297,7 @@ const addAddress = asyncHandler(async (req, res) => {
     ].some((field) => field?.trim().length === 0)
   )
     throw new ApiError(400, "required fields either empty or missing");
-  const user=await User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req._id,
     {
       $addToSet: {
@@ -308,108 +318,107 @@ const addAddress = asyncHandler(async (req, res) => {
       new: true,
     }
   );
-  const recentAddressObj=user.addresses[user.addresses.length-1];
+  const recentAddressObj = user.addresses[user.addresses.length - 1];
   return res
     .status(201)
-    .json(
-      new ApiResponse(201, recentAddressObj, "Address added successfully")
-  );
-
-
+    .json(new ApiResponse(201, recentAddressObj, "Address added successfully"));
 });
 
-const deleteAddress=asyncHandler(async(req,res)=>{
-  const {addressId}=req.params;
-  if(!addressId)
-    throw new ApiError(400,"addressId not found")
-  const user=await User.findById(req._id);
-  if(!user)
-    throw new ApiError(400,"user not found");
-  user.addresses=user.addresses.filter(address=>address._id.toString()!==addressId);
-  await user.save();
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(201, addressId, "address deleted successfully")
-    );
-})
-
-const makePrimaryAddress=asyncHandler(async(req,res)=>{
-  const {addressId}=req.params;
-  if(!addressId)
-    throw new ApiError(400,"addressId not found")
-  const user=await User.findById(req._id);
-  if(!user)
-    throw new ApiError(400,"user not found");
-  const requiredAddress=user.addresses.find(address=>address._id.toString()===addressId);
-  if(!requiredAddress)
-    throw new ApiError(400,"address not found");
-  const remainingAddressArray=user.addresses.filter(address=>address._id.toString()!==addressId);
-  user.addresses=[requiredAddress,...remainingAddressArray];
-  await user.save();
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(201, addressId, "address has been marked as primary address")
-    );
-})
-
-
-const editAddress=asyncHandler(async(req,res)=>{
-  const {addressId}=req.params;
-  if(!addressId)
-    throw new ApiError(400,"addressId not found");
-  const requiredFields=extractRequiredAddressFields(req.body);
-  const areFieldsEmptyOrMissing=checkRequiredFieldsMissingOrEmpty(requiredFields);
-  if(areFieldsEmptyOrMissing)
-    throw new ApiError(400, "required fields either empty or missing");
-  const user=await User.findById(req._id);
-  if(!user)
-    throw new ApiError(400,"user not found");
-  const requiredAddress=user.addresses.find(address=>address._id.toString()===addressId);
-  const newAddress={...requiredAddress,...requiredFields,landmark:req.body.landmark || ""}
-  const updatedAddressArray=user.addresses.map(address=>{
-    if(address._id.toString()===addressId)
-      return newAddress;
-    return address;
-  })
-  user.addresses=updatedAddressArray;
-  await user.save();
-  const updatedAddress=user.addresses.find(address=>address._id.toString()===addressId);
-  return res
-  .status(201)
-  .json(
-    new ApiResponse(201,updatedAddress, "address has been updated")
+const deleteAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  if (!addressId) throw new ApiError(400, "addressId not found");
+  const user = await User.findById(req._id);
+  if (!user) throw new ApiError(400, "user not found");
+  user.addresses = user.addresses.filter(
+    (address) => address._id.toString() !== addressId
   );
-})
+  await user.save();
+  return res
+    .status(201)
+    .json(new ApiResponse(201, addressId, "address deleted successfully"));
+});
 
+const makePrimaryAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  if (!addressId) throw new ApiError(400, "addressId not found");
+  const user = await User.findById(req._id);
+  if (!user) throw new ApiError(400, "user not found");
+  const requiredAddress = user.addresses.find(
+    (address) => address._id.toString() === addressId
+  );
+  if (!requiredAddress) throw new ApiError(400, "address not found");
+  const remainingAddressArray = user.addresses.filter(
+    (address) => address._id.toString() !== addressId
+  );
+  user.addresses = [requiredAddress, ...remainingAddressArray];
+  await user.save();
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        addressId,
+        "address has been marked as primary address"
+      )
+    );
+});
+
+const editAddress = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  if (!addressId) throw new ApiError(400, "addressId not found");
+  const requiredFields = extractRequiredAddressFields(req.body);
+  const areFieldsEmptyOrMissing =
+    checkRequiredFieldsMissingOrEmpty(requiredFields);
+  if (areFieldsEmptyOrMissing)
+    throw new ApiError(400, "required fields either empty or missing");
+  const user = await User.findById(req._id);
+  if (!user) throw new ApiError(400, "user not found");
+  const requiredAddress = user.addresses.find(
+    (address) => address._id.toString() === addressId
+  );
+  const newAddress = {
+    ...requiredAddress,
+    ...requiredFields,
+    landmark: req.body.landmark || "",
+  };
+  const updatedAddressArray = user.addresses.map((address) => {
+    if (address._id.toString() === addressId) return newAddress;
+    return address;
+  });
+  user.addresses = updatedAddressArray;
+  await user.save();
+  const updatedAddress = user.addresses.find(
+    (address) => address._id.toString() === addressId
+  );
+  return res
+    .status(201)
+    .json(new ApiResponse(201, updatedAddress, "address has been updated"));
+});
 
 //seller related routes
 
-const postSellerReview=asyncHandler(async(req,res)=>{
-  console.log(req._id)
-  const{sellerId,userReview,userRatings}=req.body;
-  const seller=await Seller.findById(sellerId);
-  if(!seller)
-    throw new ApiError(400,"Seller not found");
+const postSellerReview = asyncHandler(async (req, res) => {
+  console.log(req._id);
+  const { sellerId, userReview, userRatings } = req.body;
+  const seller = await Seller.findById(sellerId);
+  if (!seller) throw new ApiError(400, "Seller not found");
 
   const newReview = {
     _id: new mongoose.Types.ObjectId(),
     userRatings,
     userReview,
-    user:req._id,
+    user: req._id,
     createdAt: new Date(),
   };
 
   seller.reviews.push(newReview);
   await seller.save();
   return res
-  .status(201)
-  .json(
-    new ApiResponse(201,newReview, "review posted successfully")
-  );
+    .status(201)
+    .json(new ApiResponse(201, newReview, "review posted successfully"));
+});
 
-})
+
 
 module.exports = {
   registerUser,
@@ -425,5 +434,5 @@ module.exports = {
   deleteAddress,
   makePrimaryAddress,
   editAddress,
-  postSellerReview
+  postSellerReview,
 };

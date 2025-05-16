@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
+    viewedItems:[{
+      type:mongoose.Types.ObjectId,
+      ref:'Product'
+    }],
     addresses: [addressSchema],
     cart: [
       {
