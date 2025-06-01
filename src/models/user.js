@@ -39,9 +39,16 @@ const userSchema = new mongoose.Schema(
     addresses: [addressSchema],
     cart: [
       {
+        product:{
         type: mongoose.Types.ObjectId,
         ref: "Product",
       },
+      quantity:{
+        type:Number,
+        default:1
+      }
+      }
+      
     ],
     wishlist: [
       {

@@ -3,7 +3,7 @@ const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asynchandler");
 const razorpay = require("../config/rzp.config");
 const ApiResponse = require("../utils/ApiResponse");
-const { alphaNumber } = require("../Constents");
+const { alphaNumber } = require("../Constants");
 const { getProvidedSignature } = require("../helpers/order.helper");
 const Order = require("../models/order");
 const User = require("../models/user");
@@ -30,14 +30,24 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 });
 
+
+const getOrderDetails = asyncHandler(async(req,res)=>{
+  const orderId=req.params.orderId; 
+  if(!orderId)
+    throw new ApiError(400,"Orderid not given");
+  const order=await Order.findById(orderId); 
+  const user=await User.findById(req._id);
+  const deliveryAddress=user.addresses.find(address=>address._id.toString()===order.shippingAddress.toString());
+  return res.status(200).json(new ApiResponse(200,{order,deliveryAddress},"order fetched successfully"))
+})
+
 const verifyandSavePayment = asyncHandler(async (req, res) => {
-  const { orderId, paymentId, signature, products, shippingAddress } = req.body;
+  const { orderId, paymentId, signature, products, shippingAddress,totalAmount,deliveryCharge } = req.body;
   if (
-    [orderId, paymentId, signature, products, shippingAddress].some(
+    [orderId, paymentId, signature, products, shippingAddress,totalAmount,deliveryCharge].some(
       (field) => field?.length === 0 || field === undefined
     )
   ) {
-    console.log(orderId, paymentId, signature, products, shippingAddress)
     throw new ApiError(400, "required fields are empty or not found");
   }
   const generatedSignature = getProvidedSignature(orderId, paymentId);
@@ -52,13 +62,11 @@ const verifyandSavePayment = asyncHandler(async (req, res) => {
     products,
     shippingAddress,
     buyerId: req._id,
+    deliveryCharge,
+    totalAmount:totalAmount/100
   });
   await User.findByIdAndUpdate( req._id,{ $addToSet: { myOrders: order._id } });
-  for(let product of products)
-  {
-    await Product.findByIdAndUpdate(product,{isSold:true})
-  }
   return res.status(201).json(new ApiResponse(201,order,"Your Order has been placed"))
 });
 
-module.exports = { createOrder, verifyandSavePayment };
+module.exports = { createOrder, verifyandSavePayment,getOrderDetails };

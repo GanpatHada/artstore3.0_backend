@@ -1,5 +1,13 @@
-
 const mongoose = require("mongoose");
+
+const reviewSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Types.ObjectId, ref: "User" },
+    rating: Number,
+    review: String,
+  },
+  { timestamps: true }
+);
 
 const productSchema = new mongoose.Schema(
   {
@@ -24,10 +32,10 @@ const productSchema = new mongoose.Schema(
         required: true,
         type: Number,
       },
-      thickness:{
-        required:true,
-        type:Number
-      }
+      thickness: {
+        required: true,
+        type: Number,
+      },
     },
     category: {
       required: true,
@@ -50,7 +58,7 @@ const productSchema = new mongoose.Schema(
     artist: {
       required: true,
       type: mongoose.Types.ObjectId,
-      ref: "Seller", 
+      ref: "Seller",
     },
     price: {
       type: Number,
@@ -68,19 +76,24 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    weight:{
-      required:true,
-      type:Number
+    weight: {
+      required: true,
+      type: Number,
     },
-    medium:{
-      required:true,
-      type:String
+    medium: {
+      required: true,
+      type: String,
     },
-    surface:{
-      required:true,
-      type:String
+    surface: {
+      required: true,
+      type: String,
     },
-    tags: [{ type: String , enum:["LIMITED TIME DEAL","ARTSTORE PRIME"]}],
+    averageRatings:{
+      type:Number,
+      default:0
+    },
+    reviews: [reviewSchema],
+    tags: [{ type: String, enum: ["LIMITED TIME DEAL", "ARTSTORE PRIME"] }],
   },
   { timestamps: true }
 );
@@ -95,4 +108,4 @@ productSchema.pre("save", async function (next) {
 });
 
 const Product = mongoose.model("Product", productSchema);
-module.exports = Product;
+module.exports =  Product;

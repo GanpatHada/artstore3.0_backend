@@ -100,32 +100,38 @@ const loginUser = asyncHandler(async (req, res) => {
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incommingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
-  if (!incommingRefreshToken) throw new ApiError(401, "unauthorized request");
-  const decodedToken = jwt.verify(
-    incommingRefreshToken,
-    process.env.REFRESH_TOKEN_SECRET
-  );
-  const userId = decodedToken._id;
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError(401, "Invalid refresh token");
-  if (incommingRefreshToken !== user?.refreshToken)
-    throw new ApiError(401, "Refresh Token is expired");
-  //logout from here
+  if (!incommingRefreshToken)
+    throw new ApiError(401, "unauthorized request Token not found");
 
-  const accessToken = await generateAccessToken(user._id);
-  const loggedInuser = await User.findById(user._id).select(
-    "-password -refreshToken -_id -createdAt -updatedAt -__v"
-  );
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { accessToken, user: loggedInuser },
-        "Access token refreshed"
-      )
+  try {
+    const decodedToken = jwt.verify(
+      incommingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
     );
+    const userId = decodedToken._id;
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(401, "User does not exists");
+    if (incommingRefreshToken !== user?.refreshToken)
+      throw new ApiError(401, "Refresh Token is expired");
+    const accessToken = await generateAccessToken(user._id);
+    const loggedInuser = await User.findById(user._id).select(
+      "-password -refreshToken -_id -createdAt -updatedAt -__v"
+    );
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, user: loggedInuser },
+          "Access token refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(
+      401,
+      error.message || "invalid token, unable to get details"
+    );
+  }
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -175,13 +181,13 @@ const addToCart = asyncHandler(async (req, res) => {
   const userId = req._id;
   if (!productId || productId.trim().length === 0)
     throw new ApiError(400, "ProductId not given");
-  const product = Product.findById(productId);
+  const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(400, "Product not found");
   }
   await User.findByIdAndUpdate(
     userId,
-    { $addToSet: { cart: productId } },
+    { $addToSet: { cart: { product: productId } } },
 
     {
       new: true,
@@ -198,23 +204,68 @@ const deleteFromCart = asyncHandler(async (req, res) => {
   if (!productId || productId.trim().length === 0)
     throw new ApiError(400, "ProductId not given");
 
-  const product = Product.findById(productId);
+  const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(400, "Product not found");
   }
 
-  await User.findByIdAndUpdate(
-    userId,
-    { $pull: { cart: productId } },
+  try {
+    const user = await User.findById(userId);
+    const updatedCart = user.cart.filter(
+      (item) => item.product.toString() !== productId
+    );
+    user.cart = updatedCart;
+    await user.save();
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, productId, "Product has been removed from cart")
+      );
+  } catch (error) {
+    console.log(error);
+  }
+});
 
-    {
-      new: true,
-    }
+const incrementCartItem = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const userId = req._id;
+  if (!productId || productId.trim().length === 0)
+    throw new ApiError(400, "ProductId not given");
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new ApiError(400, "Product not found");
+  }
+  await User.findOneAndUpdate(
+    { _id: userId, "cart.product": productId },
+    { $inc: { "cart.$.quantity": 1 } },
+    { new: true }
   );
   return res
     .status(201)
     .json(
-      new ApiResponse(201, productId, "Product has been removed from cart")
+      new ApiResponse(201, productId, "Product quantity incremented")
+    );
+});
+
+
+const decrementCartItem = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const userId = req._id;
+  if (!productId || productId.trim().length === 0)
+    throw new ApiError(400, "ProductId not given");
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new ApiError(400, "Product not found");
+  }
+  await User.findOneAndUpdate(
+    { _id: userId, "cart.product": productId },
+    { $inc: { "cart.$.quantity": -1 } },
+    { new: true }
+  );
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(201, productId, "Product quantity decremented")
     );
 });
 
@@ -225,7 +276,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
   const userId = req._id;
   if (!productId || productId.trim().length === 0)
     throw new ApiError(400, "ProductId not given");
-  const product = Product.findById(productId);
+  const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(400, "Product not found");
   }
@@ -250,7 +301,7 @@ const deleteFromWishlist = asyncHandler(async (req, res) => {
   if (!productId || productId.trim().length === 0)
     throw new ApiError(400, "ProductId not given");
 
-  const product = Product.findById(productId);
+  const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(400, "Product not found");
   }
@@ -418,8 +469,6 @@ const postSellerReview = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, newReview, "review posted successfully"));
 });
 
-
-
 module.exports = {
   registerUser,
   loginUser,
@@ -427,6 +476,8 @@ module.exports = {
   refreshAccessToken,
   getLoggedInUserDetails,
   addToCart,
+  incrementCartItem,
+  decrementCartItem,
   deleteFromCart,
   addToWishlist,
   deleteFromWishlist,

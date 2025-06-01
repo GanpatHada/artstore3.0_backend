@@ -14,6 +14,8 @@ const {
   makePrimaryAddress,
   editAddress,
   postSellerReview,
+  incrementCartItem,
+  decrementCartItem,
 } = require("../controllers/userController");
 const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
@@ -29,6 +31,8 @@ router.route("/refreshAccessToken").post(refreshAccessToken);
 
 router.route("/logout").post(verifyJwt, logoutUser);
 router.route("/cart/:productId").post(verifyJwt, addToCart);
+router.route("/cart/:productId/increment").patch(verifyJwt, incrementCartItem);
+router.route("/cart/:productId/decrement").patch(verifyJwt, decrementCartItem);
 router.route("/cart/:productId").delete(verifyJwt, deleteFromCart);
 router.route("/wishlist/:productId").post(verifyJwt, addToWishlist);
 router.route("/wishlist/:productId").delete(verifyJwt, deleteFromWishlist);
