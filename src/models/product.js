@@ -19,9 +19,9 @@ const productSchema = new mongoose.Schema(
       required: true,
       type: [String],
     },
-    description: {
+    descriptions: {
       required: true,
-      type: String,
+      type: [String],
     },
     dimensions: {
       height: {
@@ -71,11 +71,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    isSold: {
-      required: true,
-      type: Boolean,
-      default: false,
-    },
+    
     weight: {
       required: true,
       type: Number,

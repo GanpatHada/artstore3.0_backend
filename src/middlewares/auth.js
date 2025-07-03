@@ -1,21 +1,31 @@
+const User = require("../models/user");
 const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asynchandler");
-const jwt=require('jsonwebtoken')
+const jwt = require("jsonwebtoken");
 
-const verifyJwt=asyncHandler(async(req,_,next)=>{
+const verifyJwt = asyncHandler(async (req, _, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "").trim();
+
+  if (!token) {
+    throw new ApiError(401, "Unauthorized access: token not found", "MISSED_TOKEN");
+  }
+
   try {
-    const token=req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
-    if(!token)
-    {
-      throw new ApiError(401,"unauthorized access")
+    const decodedJwt = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const user = await User.findById(decodedJwt._id).lean();
+    if (!user) {
+      throw new ApiError(401, "User does not exist", "USER_NOT_FOUND");
     }
-    const decodedJwt= jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
-    req._id=decodedJwt._id;
+
+    req._id = user._id;
     next();
   } catch (error) {
-    console.log(error)
-    throw new ApiError(401,"Invalid access token")
+    if (error.name === "TokenExpiredError") {
+      throw new ApiError(401, "Access token expired", "EXPIRED_TOKEN");
+    } else {
+      throw new ApiError(401, "Invalid access token", "INVALID_TOKEN");
+    }
   }
-})
+});
 
-module.exports=verifyJwt
+module.exports = verifyJwt;

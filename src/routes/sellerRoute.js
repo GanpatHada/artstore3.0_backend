@@ -3,7 +3,7 @@ const { registerSeller, loginSeller, logoutSeller } = require("../controllers/se
 const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
 const validateRequest = require("../middlewares/validateRequest.js");
-const { registerValidation, loginValidation } = require("../validations/user.validation.js");
+const { registerValidation, loginValidation } = require("../validations/user.validator.js");
 const router = express.Router();
 
 router.route("/register").post(validateRequest(registerValidation), registerSeller);

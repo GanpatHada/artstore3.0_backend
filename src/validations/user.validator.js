@@ -1,11 +1,25 @@
 const Joi = require("joi");
 
 const loginValidation = Joi.object({
-  email: Joi.string().email().required().messages({
-    "string.email": "Invalid email format",
-    "any.required": "Email is required",
-    "string.empty": "Email is empty",
-  }),
+  emailOrPhone: Joi.string()
+    .required()
+    .custom((value, helpers) => {
+      const isEmail = Joi.string().email().validate(value).error === undefined;
+      const isPhone = /^\d{10}$/.test(value); 
+
+      if (!isEmail && !isPhone) {
+        return helpers.message(
+          "Must be a valid email or 10-digit phone number"
+        );
+      }
+
+      return value;
+    })
+    .messages({
+      "any.required": "Email or phone is required",
+      "string.empty": "Email or phone cannot be empty",
+    }),
+
   password: Joi.string().min(6).required().messages({
     "string.min": "Password must be at least 6 characters",
     "any.required": "Password is required",
@@ -40,7 +54,7 @@ const registerValidation = Joi.object({
 });
 
 const reviewValidation = Joi.object({
-  sellerId:Joi.string().trim().required().messages({
+  sellerId: Joi.string().trim().required().messages({
     "string.empty": "sellerId cannot be empty.",
     "any.required": "sellerId is required.",
   }),
@@ -55,4 +69,4 @@ const reviewValidation = Joi.object({
   }),
 });
 
-module.exports = { loginValidation, registerValidation,reviewValidation};
+module.exports = { loginValidation, registerValidation, reviewValidation };

@@ -6,84 +6,53 @@ const Seller = require("../models/seller.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
-const {
-  extractRequiredAddressFields,
-  checkRequiredFieldsMissingOrEmpty,
-} = require("../helpers/address.helper.js");
+const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty, } = require("../helpers/address.helper.js");
 const { cookieOptions } = require("../helpers/auth.helpers.js");
-const seller = require("../models/seller.js");
 const { default: mongoose } = require("mongoose");
-
-const generateAccessToken = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    const accessToken = await user.generateAccessToken();
-    return accessToken;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const generateRefreshToken = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    const refreshToken = await user.generateRefreshToken();
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
-    return refreshToken;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const generateAccessAndRefreshToken = async (userId) => {
-  try {
-    const refreshToken = await generateRefreshToken(userId);
-    const accessToken = await generateAccessToken(userId);
-    return { accessToken, refreshToken };
-  } catch (error) {
-    throw new ApiError(500, "Something went wrong while generating token");
-  }
-};
+const { generateAccessAndRefreshToken, generateAccessTokenHelper, } = require("../helpers/user.helper.js");
 
 //auth
+//user registration
+
 
 const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
 
-  //user already exists
-  const isAccountExistsAlready = await User.findOne({ email });
-  if (isAccountExistsAlready) {
-    throw new ApiError(409, "user with this email already exists");
+  const isEmailExists = await User.findOne({ email });
+  if (isEmailExists) {
+    throw new ApiError(409, "User with this email already exists", "USER_ALREADY_EXISTS");
+  }
+
+  const isPhoneExists = await User.findOne({ phone });
+  if (isPhoneExists) {
+    throw new ApiError(409, "User with this phone already exists", "USER_ALREADY_EXISTS");
   }
 
   const user = await User.create({ email, password, fullName, phone });
-  const createduser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
-  if (!createduser) {
-    throw new ApiError(500, "Something went wrong while creating user Account");
-  }
+
   return res
     .status(201)
-    .json(new ApiResponse(200, createduser, "user registered successfully"));
+    .json(new ApiResponse(200, user.email, "User registered successfully"));
 });
 
+
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  const userFound = await User.findOne({ email });
+  const { emailOrPhone, password } = req.body;
+  const userFound = await User.findOne({
+    $or: [{ email: emailOrPhone }, { phone: emailOrPhone }]
+  });
   if (!userFound) {
-    throw new ApiError(409, "account does not exist with this email");
+    throw new ApiError(409, "User does not exist with this email or phone", "USER_NOT_FOUND");
   }
   const validPassword = await userFound.isPasswordCorrect(password);
   if (!validPassword) {
-    throw new ApiError(409, "Incorrect Password");
+    throw new ApiError(409, "Incorrect password ! please try again");
   }
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     userFound._id
   );
   const loggedInuser = await User.findById(userFound._id).select(
-    "-password -refreshToken -_id -createdAt -updatedAt -__v"
+    "-password -refreshToken  -createdAt -updatedAt -__v"
   );
   return res
     .status(200)
@@ -97,49 +66,91 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incommingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
-  if (!incommingRefreshToken)
-    throw new ApiError(401, "unauthorized request Token not found");
-
+const userDetails = asyncHandler(async (req, res) => {
+  const userId = req._id;
   try {
-    const decodedToken = jwt.verify(
-      incommingRefreshToken,
-      process.env.REFRESH_TOKEN_SECRET
+    const user = await User.findById(userId).select(
+      "-password -refreshToken -createdAt -updatedAt -__v"
     );
-    const userId = decodedToken._id;
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(401, "User does not exists");
-    if (incommingRefreshToken !== user?.refreshToken)
-      throw new ApiError(401, "Refresh Token is expired");
-    const accessToken = await generateAccessToken(user._id);
-    const loggedInuser = await User.findById(user._id).select(
-      "-password -refreshToken -_id -createdAt -updatedAt -__v"
-    );
-    return res
+    if (!user)
+      throw new ApiError(400, "user not found", "USER_NOT_FOUND")
+    return res.status(200).json(new ApiResponse(200, user, "user details found"))
+  } catch (error) {
+    throw new ApiError(error.message || "something went wrong while fetching user details")
+  }
+
+
+})
+
+const updateUser = asyncHandler(async (req, res) => {
+  const { fullName, profileImage } = req.body;
+  const filePath = req.file?.path;
+  try {
+    const user = await User.findById(req._id);
+    if (fullName !== undefined) {
+      user.fullName = fullName;
+    }
+    if (filePath) {
+      const profileImageUrl = await uploadOnCloudinary(filePath);
+      if (!profileImageUrl) {
+        throw new ApiError(500, "Image upload failed");
+      }
+      user.profileImage = profileImageUrl;
+    }
+    if (profileImage === "null") {
+      user.profileImage = null;
+    }
+    await user.save();
+    res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          { accessToken, user: loggedInuser },
-          "Access token refreshed"
+          { profileImage: user.profileImage, fullName: user.fullName },
+          "Profile updated successfully"
         )
       );
   } catch (error) {
     throw new ApiError(
-      401,
-      error.message || "invalid token, unable to get details"
+      500,
+      error.message || "Something went wrong while updating profile"
     );
   }
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken)
+    throw new ApiError(401, "unauthorized request", "MISSED_REFRESH_TOKEN");
+
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  } catch (error) {
+    const isExpired = error.name === "TokenExpiredError";
+    throw new ApiError(
+      401,
+      isExpired ? "Refresh token expired" : "Invalid refresh token",
+      isExpired ? "EXPIRED_REFRESH_TOKEN" : "INVALID_REFRESH_TOKEN"
+    );
+  }
+  const user = await User.findById(decodedToken._id);
+  if (!user) throw new ApiError(401, "User does not exists", "USER_NOT_FOUND");
+  if (refreshToken !== user?.refreshToken)
+    throw new ApiError(401, "Refresh token mismatch", "INVALID_REFRESH_TOKEN");
+  const accessToken = await generateAccessTokenHelper(user._id);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, accessToken, "Access token refreshed"));
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
   const loggedInuser = await User.findByIdAndUpdate(
     req._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: "",
       },
     },
     {
@@ -152,27 +163,10 @@ const logoutUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .clearCookie("refreshToken", cookieOptions)
-    .json(new ApiResponse(200, {}, "user logged out successfully"));
+    .json(new ApiResponse(200, null, "user logged out successfully"));
 });
 
 //details
-
-const getLoggedInUserDetails = asyncHandler(async (req, res) => {
-  const userId = req._id;
-  const user = await User.findById(userId).select("-password -refreshToken");
-  if (!user) {
-    throw new ApiError(400, "user not found");
-  }
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { user, userRole: "USER" },
-        "user details fetched successfully"
-      )
-    );
-});
 
 //cart
 
@@ -242,11 +236,8 @@ const incrementCartItem = asyncHandler(async (req, res) => {
   );
   return res
     .status(201)
-    .json(
-      new ApiResponse(201, productId, "Product quantity incremented")
-    );
+    .json(new ApiResponse(201, productId, "Product quantity incremented"));
 });
-
 
 const decrementCartItem = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -264,9 +255,7 @@ const decrementCartItem = asyncHandler(async (req, res) => {
   );
   return res
     .status(201)
-    .json(
-      new ApiResponse(201, productId, "Product quantity decremented")
-    );
+    .json(new ApiResponse(201, productId, "Product quantity decremented"));
 });
 
 //wishlist
@@ -446,6 +435,10 @@ const editAddress = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, updatedAddress, "address has been updated"));
 });
 
+//product reviews
+
+
+
 //seller related routes
 
 const postSellerReview = asyncHandler(async (req, res) => {
@@ -472,9 +465,9 @@ const postSellerReview = asyncHandler(async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  userDetails,
   logoutUser,
   refreshAccessToken,
-  getLoggedInUserDetails,
   addToCart,
   incrementCartItem,
   decrementCartItem,
@@ -486,4 +479,5 @@ module.exports = {
   makePrimaryAddress,
   editAddress,
   postSellerReview,
+  updateUser,
 };

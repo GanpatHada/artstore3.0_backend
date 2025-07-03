@@ -1,11 +1,12 @@
-function errorHandler(error, req, res, next) {
+function errorHandler(error,_, res,_) {
   console.error(error.stack);
   res
     .status(error.statusCode || 500)
     .json({
-      message: error.message,
-      error: error.data,
-      success: error.success,
+      success: false,
+      message: error.message || "something went wrong",
+      errorCode: error.errorCode || "INTERNAL_ERROR",
+      errors:error.errors || [],
       status:error.statusCode || 500
     });
 }
