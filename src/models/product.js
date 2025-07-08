@@ -95,13 +95,19 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.pre("save", async function (next) {
-  if (!this.isModified("discount")) return next();
-
-  const discountAmount = Math.floor((this.discount / 100) * this.actualPrice);
-
-  this.price = Math.floor(this.actualPrice - discountAmount);
+  if (this.isModified("discount")) {
+    const discountAmount = Math.floor((this.discount / 100) * this.actualPrice);
+    this.price = Math.floor(this.actualPrice - discountAmount);
+  }
   next();
 });
+
+productSchema.methods.updateAverageRating = function () {
+  const total = this.reviews.reduce((acc, r) => acc + r.rating, 0);
+  this.averageRatings = this.reviews.length === 0
+    ? 0
+    : parseFloat((total / this.reviews.length).toFixed(1));
+};
 
 const Product = mongoose.model("Product", productSchema);
 module.exports =  Product;

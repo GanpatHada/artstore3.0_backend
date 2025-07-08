@@ -7,6 +7,6 @@ const { verifyPaymentSchema } = require('../validations/payment.validation.js');
 
 router.route("/").post(createOrder);
 router.route("/verifyPayment").post(verifyJwt,validateRequest(verifyPaymentSchema),verifyPayment)
-router.route("/:orderId").get(verifyJwt,getOrderDetails)
+router.route("/:orderId").get(getOrderDetails)
 
 module.exports=router

@@ -17,7 +17,6 @@ const addProduct = asyncHandler(async (req, res) => {
     discount,
   } = req.body;
 
-  //check for missing and empty fields
 
   if (
     [title, description, category, heightInCm, widthInCm, price].some(
@@ -27,7 +26,6 @@ const addProduct = asyncHandler(async (req, res) => {
     throw new ApiError(400, "required fields are missing or empty");
   }
 
-  //check for imagesPath
 
   const productImages = req.files;
   if (productImages.length === 0) {
@@ -41,7 +39,6 @@ const addProduct = asyncHandler(async (req, res) => {
       productImagesUrls.push(productImageUrl);
     }
   }
-  //save Product
   const newProduct = await Product.create({
     title,
     description,
@@ -181,32 +178,49 @@ const getProductsOnLimitedTimeDeal = asyncHandler(async (_, res) => {
 
 const productReview = asyncHandler(async (req, res) => {
   const { productId } = req.params;
-  if (!productId) throw new ApiError(400, "Product's id not given");
-  const { rating, review } = req.body;
-  if (!rating || !review) throw new ApiError(400, "rating or review is empty");
-  const userId = req._id;
-  try {
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(400, "User not found", "USER_NOT_FOUND");
-    const product = await Product.findById(productId);
-    if (!product)
-      throw new ApiError(400, "Product not found", "PRODUCT_NOT_FOUND");
-    const reviewBody = { user: userId, rating, review };
-    product.reviews.unshift(reviewBody);
-    await product.save();
-    const populatedProduct = await Product.findById(productId)
-      .select("reviews")
-      .populate("reviews.user", "fullName _id profileImage");
+  if (!productId) throw new ApiError(400, "Product ID not provided");
 
-    const addedReview = populatedProduct.reviews[0];
-    return res
-      .status(201)
-      .json(new ApiResponse(201, addedReview, "Review added successfully"));
-  } catch (error) {
-    console.log(error.message);
-    throw new ApiError(500, "Internal server error", "INTERNAL_ERROR");
+  const { rating, review } = req.body;
+  if (!rating || !review) {
+    throw new ApiError(400, "Rating and review must both be provided");
   }
+
+  const userId = req._id;
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(400, "User not found", "USER_NOT_FOUND");
+
+  const product = await Product.findById(productId);
+  if (!product) throw new ApiError(400, "Product not found", "PRODUCT_NOT_FOUND");
+
+  
+  const alreadyReviewed = product.reviews.some(
+    (r) => r.user.toString() === userId.toString()
+  );
+
+  if (alreadyReviewed) {
+    throw new ApiError(400, "You have already reviewed this product");
+  }
+
+  const reviewBody = { user: userId, rating, review };
+
+  product.reviews.unshift(reviewBody);
+  product.updateAverageRating(); 
+  await product.save();
+
+  const populatedProduct = await Product.findById(productId)
+    .select("reviews")
+    .populate("reviews.user", "fullName _id profileImage");
+
+  const addedReview = populatedProduct.reviews.find(
+    (r) => r.user._id.toString() === userId.toString()
+  );
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, addedReview, "Review added successfully"));
 });
+
 
 const deleteProductReview = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -228,6 +242,7 @@ const deleteProductReview = asyncHandler(async (req, res) => {
     product.reviews = product.reviews.filter(
       (review) => review._id.toString() !== reviewId.toString()
     );
+    product.updateAverageRating();
     await product.save();
     return res
       .status(201)
@@ -272,6 +287,8 @@ const updateProductReview = asyncHandler(async (req, res) => {
 
     if (review !== undefined) existingReview.review = review;
     if (rating !== undefined) existingReview.rating = rating;
+
+    product.updateAverageRating();
 
     await product.save();
 

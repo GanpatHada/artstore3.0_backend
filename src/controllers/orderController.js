@@ -68,10 +68,10 @@ const getAddressDetails = async (userId, addressId) => {
   return {
     fullName: address.receiverName,
     phone: address.mobileNumber,
-    street: `${address.address1}, ${address.address2}`,
+    street: `${address.address1}, ${address.address2}, ${address.landmark}`.trim(),
     city: address.city,
     state: address.state,
-    pincode: address.pincode,
+    pincode: address.pinCode,
   };
 };
 
@@ -98,7 +98,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
       user: userId,
       orderedItems,
       shippingAddress,
-      totalAmount,
+      totalAmount:(totalAmount/100),
       deliveryCharge,
       isPaid: true,
       paidAt: new Date(),
@@ -129,9 +129,9 @@ const getOrderDetails = asyncHandler(async (req, res) => {
   if (!orderId)
     throw new ApiError(400, "Orderid not given");
   const order = await Order.findById(orderId);
-  const user = await User.findById(req._id);
-  const deliveryAddress = user.addresses.find(address => address._id.toString() === order.shippingAddress.toString());
-  return res.status(200).json(new ApiResponse(200, { order, deliveryAddress }, "order fetched successfully"))
+  if(!order)
+    throw new ApiError(400,"Order not found")
+  return res.status(200).json(new ApiResponse(200,order, "order fetched successfully"))
 })
 
 

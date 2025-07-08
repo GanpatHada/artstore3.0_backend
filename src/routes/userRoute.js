@@ -17,6 +17,7 @@ const {
   decrementCartItem,
   updateUser,
   userDetails,
+  getUserOrders,
 } = require("../controllers/userController");
 const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
@@ -44,6 +45,7 @@ router.route("/address/:addressId").delete(verifyJwt,deleteAddress)
 router.route("/address/makePrimary/:addressId").post(verifyJwt,makePrimaryAddress)
 router.route("/address/:addressId").patch(verifyJwt,editAddress)
 router.route("/review").put(verifyJwt,validateRequest(reviewValidation),postSellerReview)
+router.route("/orders").get(verifyJwt,getUserOrders)
 
 
 module.exports = router;

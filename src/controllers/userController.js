@@ -310,6 +310,17 @@ const deleteFromWishlist = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserOrders = asyncHandler(async (req, res) => {
+  const user = await User.findById(req._id).populate("myOrders");
+  if (!user || !user.myOrders || user.myOrders.length === 0) {
+    throw new ApiError(404, "Orders not found", "ORDER_NOT_FOUND");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.myOrders, "User orders fetched successfully"));
+});
+
+
 //addresses
 
 const addAddress = asyncHandler(async (req, res) => {
@@ -480,4 +491,5 @@ module.exports = {
   editAddress,
   postSellerReview,
   updateUser,
+  getUserOrders
 };
