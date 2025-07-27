@@ -92,40 +92,51 @@ const getProducts = asyncHandler(async (req, res) => {
 
 const getProductDetails = asyncHandler(async (req, res) => {
   const { productId } = req.params;
-  try {
-    const product = await Product.findById(productId)
+  const { fields } = req.query;
+
+  if (!productId) {
+    throw new ApiError(400, "Product ID not provided", "PRODUCT_ID_MISSING");
+  }
+
+  const selectFields = fields ? fields.split(",").join(" ") : "";
+
+  let query = Product.findById(productId).select(selectFields);
+
+  if (!fields) {
+    query = query
       .populate("artist", "_id fullName")
       .populate("reviews.user", "fullName profileImage");
-    if (!product) throw new ApiError(400, "Product not found");
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(201, product, "Product Details fetched successfully")
-      );
-  } catch (error) {
-    console.log(error);
-    throw new ApiError(
-      401,
-      "Something went wrong while fetching product details"
-    );
   }
+
+  const product = await query.lean();
+
+  if (!product) {
+    throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, product, "Product details fetched successfully")
+  );
 });
+
 
 const getProductsUnderOneThousand = asyncHandler(async (_, res) => {
   try {
-    const products = await Product.find({ price: { $lt: 1000 } })
-      .limit(4)
-      .sort({ price: 1 })
-      .select("id productImages");
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          products,
-          "Products under one thousand fetched successfully"
-        )
-      );
+    const products = await Product.find({ price: { $lt: 1000 } }).limit(4).sort({ price: 1 }).select("productImages title actualPrice price").lean();
+    const productsUnder1k = products.map(product => {
+      const { productImages, ...rest } = product;
+      return {
+        ...rest,
+        productImage: productImages?.[0] || null
+      };
+    });
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+         productsUnder1k,
+        "Products under one thousand fetched successfully"
+      )
+    );
   } catch (error) {
     console.log(error);
     throw new ApiError(400, "Unable to load products");
@@ -134,16 +145,20 @@ const getProductsUnderOneThousand = asyncHandler(async (_, res) => {
 
 const getProductOnHighlyDiscount = asyncHandler(async (_, res) => {
   try {
-    const products = await Product.find({ discount: { $gt: 40 } })
-      .limit(4)
-      .sort({ price: 1 })
-      .select("id productImages");
+    const products = await Product.find({ discount: { $gt: 40 } }).limit(4).sort({ price: 1 }).select("productImages title discount price actualPrice").lean();
+    const productsOnHighDiscount = products.map(product => {
+      const { productImages, ...rest } = product;
+      return {
+        ...rest,
+        productImage: productImages?.[0] || null
+      };
+    });
     return res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          products,
+          productsOnHighDiscount,
           "Products which are on high discount fetched successfully"
         )
       );
@@ -155,18 +170,21 @@ const getProductOnHighlyDiscount = asyncHandler(async (_, res) => {
 
 const getProductsOnLimitedTimeDeal = asyncHandler(async (_, res) => {
   try {
-    const products = await Product.find({
-      tags: { $in: ["LIMITED TIME DEAL"] },
-    })
-      .limit(4)
-      .sort({ price: 1 })
-      .select("id productImages");
+    const products = await Product.find({tags: { $in: ["LIMITED TIME DEAL"] },}).limit(4).sort({ price: 1 }).select("productImages title tags").lean();
+    const productsOnLimitedTimeDeal = products.map(product => {
+      const { productImages,tags, ...rest } = product;
+      return {
+        ...rest,
+        productImage: productImages?.[0] || null,
+        tag:tags?.[0] || null
+      };
+    });
     return res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          products,
+          productsOnLimitedTimeDeal,
           "Limited time deal products fetched successfully"
         )
       );
@@ -193,7 +211,7 @@ const productReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(productId);
   if (!product) throw new ApiError(400, "Product not found", "PRODUCT_NOT_FOUND");
 
-  
+
   const alreadyReviewed = product.reviews.some(
     (r) => r.user.toString() === userId.toString()
   );
@@ -205,7 +223,7 @@ const productReview = asyncHandler(async (req, res) => {
   const reviewBody = { user: userId, rating, review };
 
   product.reviews.unshift(reviewBody);
-  product.updateAverageRating(); 
+  product.updateAverageRating();
   await product.save();
 
   const populatedProduct = await Product.findById(productId)
@@ -223,21 +241,21 @@ const productReview = asyncHandler(async (req, res) => {
 
 
 const deleteProductReview = asyncHandler(async (req, res) => {
-  const { productId } = req.params;
-  const { reviewId } = req.params;
+  const { productId, reviewId } = req.params;
   const userId = req._id;
   if (!productId) throw new ApiError(400, "Product's id not given");
   if (!reviewId) throw new ApiError(400, "Review's id not given");
   try {
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(400, "User not found", "USER_NOT_FOUND");
     const product = await Product.findById(productId);
-    if (!product) throw new ApiError(400, "Product not found");
+    if (!product) throw new ApiError(404, "Product not found");
 
-    const reviewExists = product.reviews.some(
+    const reviewExists = product.reviews.find(
       (review) => review._id.toString() === reviewId.toString()
     );
-    if (!reviewExists) throw new ApiError(400, "review not found");
+    if (!reviewExists) throw new ApiError(404, "Review not found");
+
+    if(reviewExists.user.toString()!==userId.toString())
+      throw new ApiError(403, "You are not authorized to delete this review");
 
     product.reviews = product.reviews.filter(
       (review) => review._id.toString() !== reviewId.toString()
@@ -245,8 +263,8 @@ const deleteProductReview = asyncHandler(async (req, res) => {
     product.updateAverageRating();
     await product.save();
     return res
-      .status(201)
-      .json(new ApiResponse(201, reviewId, "Review deleted successfully"));
+      .status(200)
+      .json(new ApiResponse(200, reviewId, "Review deleted successfully"));
   } catch (error) {
     console.log(error.message);
     throw new ApiError(500, "Internal server error", "INTERNAL_ERROR");
@@ -269,9 +287,6 @@ const updateProductReview = asyncHandler(async (req, res) => {
   }
 
   try {
-    const user = await User.findById(userId);
-    if (!user) throw new ApiError(400, "User not found", "USER_NOT_FOUND");
-
     const product = await Product.findById(productId);
     if (!product) throw new ApiError(400, "Product not found");
 
@@ -309,6 +324,22 @@ const updateProductReview = asyncHandler(async (req, res) => {
   }
 });
 
+const getMyProductReview = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const userId = req._id;
+  if (!productId) throw new ApiError(400, "Product ID not provided");
+  const product = await Product.findById(productId);
+  if (!product) throw new ApiError(404, "Product not found");
+  const userReview = product.reviews.find(
+    (review) => review.user.toString() === userId.toString()
+  );
+  if (!userReview) throw new ApiError(404, "You have not reviewed this product","REVIEW NOT FOUND");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, userReview, "Fetched your review successfully"));
+});
+
+
 module.exports = {
   addProduct,
   getProducts,
@@ -319,4 +350,5 @@ module.exports = {
   productReview,
   deleteProductReview,
   updateProductReview,
+  getMyProductReview
 };
