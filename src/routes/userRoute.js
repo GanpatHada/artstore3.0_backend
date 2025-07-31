@@ -5,8 +5,6 @@ const {
   logoutUser,
   addToCart,
   deleteFromCart,
-  addToWishlist,
-  deleteFromWishlist,
   refreshAccessToken,
   addAddress,
   deleteAddress,
@@ -23,6 +21,7 @@ const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
 const validateRequest = require("../middlewares/validateRequest.js");
 const { loginValidation, registerValidation, reviewValidation } = require("../validations/user.validator.js");
+const { createWishlist, deleteWishlist,addItemInWishlist, deleteItemFromWishlist, moveItemToAnotherWishlist} = require("../controllers/wishlistController.js");
 const router = express.Router();
 
 router.route("/register").post(validateRequest(registerValidation), registerUser);
@@ -38,8 +37,15 @@ router.route("/cart/:productId").post(verifyJwt, addToCart);
 router.route("/cart/:productId/increment").patch(verifyJwt, incrementCartItem);
 router.route("/cart/:productId/decrement").patch(verifyJwt, decrementCartItem);
 router.route("/cart/:productId").delete(verifyJwt, deleteFromCart);
-router.route("/wishlist/:productId").post(verifyJwt, addToWishlist);
-router.route("/wishlist/:productId").delete(verifyJwt, deleteFromWishlist);
+
+
+router.route("/wishlists").post(verifyJwt,createWishlist)
+router.route("/wishlists/:wishlistId").delete(verifyJwt,deleteWishlist)
+router.route("/wishlists/:wishlistId/items").post(verifyJwt,addItemInWishlist)
+router.route("/wishlists/:wishlistId/items/:productId").delete(verifyJwt,deleteItemFromWishlist)
+router.route("/wishlists/:fromWishlistId/items/:productId/move/:toWishlistId").patch(verifyJwt, moveItemToAnotherWishlist);
+
+
 router.route("/address").post(verifyJwt,addAddress)
 router.route("/address/:addressId").delete(verifyJwt,deleteAddress)
 router.route("/address/makePrimary/:addressId").post(verifyJwt,makePrimaryAddress)

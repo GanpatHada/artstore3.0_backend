@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const { addressSchema } = require("./address");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { cartItemSchema } = require("./cart");
+const { wishlistSchema } = require("./wishlist");
 
 
 
@@ -37,25 +39,8 @@ const userSchema = new mongoose.Schema(
       ref:'Product'
     }],
     addresses: [addressSchema],
-    cart: [
-      {
-        product:{
-        type: mongoose.Types.ObjectId,
-        ref: "Product",
-      },
-      quantity:{
-        type:Number,
-        default:1
-      }
-      }
-      
-    ],
-    wishlist: [
-      {
-        type: mongoose.Types.ObjectId,
-        ref: "Product",
-      },
-    ],
+    cart: [cartItemSchema],
+    wishlists: [wishlistSchema],
     myOrders:[{
       type:mongoose.Types.ObjectId,
       ref:"Order"
@@ -66,10 +51,22 @@ const userSchema = new mongoose.Schema(
   }
 );
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+
+  if (this.isNew && (!this.wishlists || this.wishlists.length === 0)) {
+  this.wishlists = [{
+    listName: "Shopping List",
+    isDefault: true,
+    privacy: "Private",
+    items: []
+  }];
+}
+
   next();
 });
+
 
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);

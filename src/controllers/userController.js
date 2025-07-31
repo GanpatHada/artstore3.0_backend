@@ -6,26 +6,39 @@ const Seller = require("../models/seller.js");
 const uploadOnCloudinary = require("../utils/cloudinary.js");
 const Product = require("../models/product.js");
 const jwt = require("jsonwebtoken");
-const { extractRequiredAddressFields, checkRequiredFieldsMissingOrEmpty, } = require("../helpers/address.helper.js");
+const {
+  extractRequiredAddressFields,
+  checkRequiredFieldsMissingOrEmpty,
+} = require("../helpers/address.helper.js");
 const { cookieOptions } = require("../helpers/auth.helpers.js");
 const { default: mongoose } = require("mongoose");
-const { generateAccessAndRefreshToken, generateAccessTokenHelper, } = require("../helpers/user.helper.js");
+const {
+  generateAccessAndRefreshToken,
+  generateAccessTokenHelper,
+} = require("../helpers/user.helper.js");
 
 //auth
 //user registration
-
 
 const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
 
   const isEmailExists = await User.findOne({ email });
   if (isEmailExists) {
-    throw new ApiError(409, "User with this email already exists", "USER_ALREADY_EXISTS");
+    throw new ApiError(
+      409,
+      "User with this email already exists",
+      "USER_ALREADY_EXISTS"
+    );
   }
 
   const isPhoneExists = await User.findOne({ phone });
   if (isPhoneExists) {
-    throw new ApiError(409, "User with this phone already exists", "USER_ALREADY_EXISTS");
+    throw new ApiError(
+      409,
+      "User with this phone already exists",
+      "USER_ALREADY_EXISTS"
+    );
   }
 
   const user = await User.create({ email, password, fullName, phone });
@@ -35,14 +48,17 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user.email, "User registered successfully"));
 });
 
-
 const loginUser = asyncHandler(async (req, res) => {
   const { emailOrPhone, password } = req.body;
   const userFound = await User.findOne({
-    $or: [{ email: emailOrPhone }, { phone: emailOrPhone }]
+    $or: [{ email: emailOrPhone }, { phone: emailOrPhone }],
   });
   if (!userFound) {
-    throw new ApiError(409, "User does not exist with this email or phone", "USER_NOT_FOUND");
+    throw new ApiError(
+      409,
+      "User does not exist with this email or phone",
+      "USER_NOT_FOUND"
+    );
   }
   const validPassword = await userFound.isPasswordCorrect(password);
   if (!validPassword) {
@@ -72,15 +88,16 @@ const userDetails = asyncHandler(async (req, res) => {
     const user = await User.findById(userId).select(
       "-password -refreshToken -createdAt -updatedAt -__v"
     );
-    if (!user)
-      throw new ApiError(400, "user not found", "USER_NOT_FOUND")
-    return res.status(200).json(new ApiResponse(200, user, "user details found"))
+    if (!user) throw new ApiError(400, "user not found", "USER_NOT_FOUND");
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "user details found"));
   } catch (error) {
-    throw new ApiError(error.message || "something went wrong while fetching user details")
+    throw new ApiError(
+      error.message || "something went wrong while fetching user details"
+    );
   }
-
-
-})
+});
 
 const updateUser = asyncHandler(async (req, res) => {
   const { fullName, profileImage } = req.body;
@@ -182,7 +199,6 @@ const addToCart = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     userId,
     { $addToSet: { cart: { product: productId } } },
-
     {
       new: true,
     }
@@ -258,68 +274,45 @@ const decrementCartItem = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, productId, "Product quantity decremented"));
 });
 
-//wishlist
 
-const addToWishlist = asyncHandler(async (req, res) => {
-  const { productId } = req.params;
-  const userId = req._id;
-  if (!productId || productId.trim().length === 0)
-    throw new ApiError(400, "ProductId not given");
-  const product = await Product.findById(productId);
-  if (!product) {
-    throw new ApiError(400, "Product not found");
-  }
-  await User.findByIdAndUpdate(
-    userId,
-    { $addToSet: { wishlist: productId } },
-
-    {
-      new: true,
-    }
-  ).populate("wishlist");
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(201, productId, "Product has been added to Wishlist")
-    );
-});
-
-const deleteFromWishlist = asyncHandler(async (req, res) => {
-  const { productId } = req.params;
-  const userId = req._id;
-  if (!productId || productId.trim().length === 0)
-    throw new ApiError(400, "ProductId not given");
-
-  const product = await Product.findById(productId);
-  if (!product) {
-    throw new ApiError(400, "Product not found");
-  }
-
-  await User.findByIdAndUpdate(
-    userId,
-    { $pull: { wishlist: productId } },
-
-    {
-      new: true,
-    }
-  ).populate("wishlist");
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(201, productId, "Product has been removed from wishlist")
-    );
-});
 
 const getUserOrders = asyncHandler(async (req, res) => {
   const user = await User.findById(req._id).populate("myOrders");
+
   if (!user || !user.myOrders || user.myOrders.length === 0) {
     throw new ApiError(404, "Orders not found", "ORDER_NOT_FOUND");
   }
+
+  const updatedOrders = [];
+
+  for (const order of user.myOrders) {
+    const updatedItems = await Promise.all(
+      order.orderedItems.map(async (item) => {
+        const product = await Product.findById(item.product);
+
+        const myReview = product.reviews.find(
+          (rev) => rev.user.toString() === req._id.toString()
+        );
+
+        return {
+          ...item.toObject(),
+          myReview: myReview || null,
+        };
+      })
+    );
+
+    updatedOrders.push({
+      ...order.toObject(),
+      orderedItems: updatedItems,
+    });
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user.myOrders, "User orders fetched successfully"));
+    .json(
+      new ApiResponse(200, updatedOrders, "User orders fetched successfully")
+    );
 });
-
 
 //addresses
 
@@ -448,8 +441,6 @@ const editAddress = asyncHandler(async (req, res) => {
 
 //product reviews
 
-
-
 //seller related routes
 
 const postSellerReview = asyncHandler(async (req, res) => {
@@ -483,13 +474,11 @@ module.exports = {
   incrementCartItem,
   decrementCartItem,
   deleteFromCart,
-  addToWishlist,
-  deleteFromWishlist,
   addAddress,
   deleteAddress,
   makePrimaryAddress,
   editAddress,
   postSellerReview,
   updateUser,
-  getUserOrders
+  getUserOrders,
 };

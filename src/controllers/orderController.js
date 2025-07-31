@@ -12,8 +12,7 @@ const Product = require("../models/product");
 const createOrder = asyncHandler(async (req, res) => {
   const { amount } = req.body;
 
-  if (!amount)
-    throw new ApiError(400, "Amount not given", "AMOUNT_MISSING");
+  if (!amount) throw new ApiError(400, "Amount not given", "AMOUNT_MISSING");
 
   const getUniqueReceiptNo = customAlphabet(alphaNumber, 12);
   const options = {
@@ -35,16 +34,17 @@ const createOrder = asyncHandler(async (req, res) => {
 
 const verifySignature = (orderId, paymentId, signature) => {
   const generatedSignature = getProvidedSignature(orderId, paymentId);
-  return (generatedSignature == signature)
-}
+  return generatedSignature == signature;
+};
 
-const mapOrderedItems = async (productsList) => {
+const mapOrderedItems = async (productsList, userId) => {
   const orderedItems = [];
 
   for (const item of productsList) {
     const product = await Product.findById(item.productId);
     if (!product)
       throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
+
     orderedItems.push({
       product: product._id,
       name: product.title,
@@ -53,9 +53,9 @@ const mapOrderedItems = async (productsList) => {
       quantity: item.quantity,
     });
   }
-  return orderedItems;
 
-}
+  return orderedItems;
+};
 
 const getAddressDetails = async (userId, addressId) => {
   const user = await User.findById(userId);
@@ -68,7 +68,8 @@ const getAddressDetails = async (userId, addressId) => {
   return {
     fullName: address.receiverName,
     phone: address.mobileNumber,
-    street: `${address.address1}, ${address.address2}, ${address.landmark}`.trim(),
+    street:
+      `${address.address1}, ${address.address2}, ${address.landmark}`.trim(),
     city: address.city,
     state: address.state,
     pincode: address.pinCode,
@@ -76,7 +77,6 @@ const getAddressDetails = async (userId, addressId) => {
 };
 
 const verifyPayment = asyncHandler(async (req, res) => {
-
   const {
     razorpay_order_id,
     razorpay_payment_id,
@@ -89,51 +89,79 @@ const verifyPayment = asyncHandler(async (req, res) => {
 
   const userId = req._id;
 
-  const signatureVerified = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+  const signatureVerified = verifySignature(
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature
+  );
   if (!signatureVerified)
-    throw new ApiError(400, "Invalid payment credential", "SIGNATURE_MISSMATCH")
-    const orderedItems = await mapOrderedItems(products);
-    const shippingAddress = await getAddressDetails(userId, addressId);
-    const order = await Order.create({
-      user: userId,
-      orderedItems,
-      shippingAddress,
-      totalAmount:(totalAmount/100),
-      deliveryCharge,
-      isPaid: true,
-      paidAt: new Date(),
-      paymentInfo: {
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id,
-        signature: razorpay_signature,
-        method: "Razorpay",
-        status: "Paid",
+    throw new ApiError(
+      400,
+      "Invalid payment credential",
+      "SIGNATURE_MISSMATCH"
+    );
+  const orderedItems = await mapOrderedItems(products, userId);
+  const shippingAddress = await getAddressDetails(userId, addressId);
+  const order = await Order.create({
+    user: userId,
+    orderedItems,
+    shippingAddress,
+    totalAmount: totalAmount / 100,
+    deliveryCharge,
+    isPaid: true,
+    paidAt: new Date(),
+    paymentInfo: {
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature,
+      method: "Razorpay",
+      status: "Paid",
+    },
+    status: "Pending",
+  });
+  await User.findByIdAndUpdate(userId, {
+    $push: { myOrders: order._id },
+  });
+
+  for (const item of products) {
+    await Product.findByIdAndUpdate(item.productId, {
+      $inc: { stock: -item.quantity },
+    });
+  }
+  const enrichedItems = await Promise.all(
+    order.orderedItems.map(async (item) => {
+      const product = await Product.findById(item.product);
+      const myReview = product.reviews.find(
+        (rev) => rev.user.toString() === userId.toString()
+      );
+
+      return {
+        ...item.toObject(),
+        myReview: myReview || null,
+      };
+    })
+  );
+
+  res.status(201).json(
+    new ApiResponse(
+      201,
+      {
+        ...order.toObject(),
+        orderedItems: enrichedItems,
       },
-      status: "Pending",
-    });
-    await User.findByIdAndUpdate(userId, {
-      $push: { myOrders: order._id },
-    });
-
-    for (const item of products) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: -item.quantity },
-      });
-    }
-    res.status(201).json(new ApiResponse(201, order, "Order Created successfully"));
-})
-
+      "Order Created successfully"
+    )
+  );
+});
 
 const getOrderDetails = asyncHandler(async (req, res) => {
   const orderId = req.params.orderId;
-  if (!orderId)
-    throw new ApiError(400, "Orderid not given");
+  if (!orderId) throw new ApiError(400, "Orderid not given");
   const order = await Order.findById(orderId);
-  if(!order)
-    throw new ApiError(400,"Order not found")
-  return res.status(200).json(new ApiResponse(200,order, "order fetched successfully"))
-})
-
-
+  if (!order) throw new ApiError(400, "Order not found");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, order, "order fetched successfully"));
+});
 
 module.exports = { createOrder, verifyPayment, getOrderDetails };
