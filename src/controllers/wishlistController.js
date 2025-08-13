@@ -211,6 +211,121 @@ const moveItemToAnotherWishlist = asyncHandler(async (req, res) => {
   );
 });
 
+//add note
+
+const addNoteToWishlistItem = asyncHandler(async (req, res) => {
+  const userId = req._id;
+  const { wishlistId, productId } = req.params;
+  const { comment, priority } = req.body;
+
+  if (!wishlistId || !productId) {
+    throw new ApiError(400, "Wishlist ID and Product ID are required", "MISSING_FIELDS");
+  }
+
+  if (!["Low", "Medium", "High"].includes(priority)) {
+    throw new ApiError(400, "Invalid priority value", "INVALID_PRIORITY");
+  }
+
+  const user = await User.findById(userId);
+
+  const wishlist = user.wishlists.id(wishlistId);
+  if (!wishlist) throw new ApiError(404, "Wishlist not found", "WISHLIST_NOT_FOUND");
+
+  const item = wishlist.items.find(i => i.product.toString() === productId);
+  if (!item) throw new ApiError(404, "Product not found in wishlist", "PRODUCT_NOT_IN_WISHLIST");
+
+  if (item.note) {
+    throw new ApiError(400, "Note already exists, use edit API instead", "NOTE_ALREADY_EXISTS");
+  }
+
+  item.note = {
+    comment: comment || "",
+    priority: priority || "Medium"
+  };
+
+  await user.save();
+
+  return res.status(201).json(
+    new ApiResponse(201, { wishlistId, productId, note: item.note }, "Note added successfully")
+  );
+});
+
+//edit note
+
+const editNoteInWishlistItem = asyncHandler(async (req, res) => {
+  const userId = req._id;
+  const { wishlistId, productId } = req.params;
+  const { comment, priority } = req.body;
+
+  if (!wishlistId || !productId) {
+    throw new ApiError(400, "Wishlist ID and Product ID are required", "MISSING_FIELDS");
+  }
+
+  const user = await User.findById(userId);
+
+  const wishlist = user.wishlists.id(wishlistId);
+  if (!wishlist) throw new ApiError(404, "Wishlist not found", "WISHLIST_NOT_FOUND");
+
+  const item = wishlist.items.find(i => i.product.toString() === productId);
+  if (!item) throw new ApiError(404, "Product not found in wishlist", "PRODUCT_NOT_IN_WISHLIST");
+
+  if (!item.note) {
+    throw new ApiError(404, "Note does not exist, use add API instead", "NOTE_NOT_FOUND");
+  }
+
+  if (comment !== undefined) {
+    item.note.comment = comment;
+  }
+  if (priority !== undefined) {
+    if (!["Low", "Medium", "High"].includes(priority)) {
+      throw new ApiError(400, "Invalid priority value", "INVALID_PRIORITY");
+    }
+    item.note.priority = priority;
+  }
+
+  await user.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, { wishlistId, productId, note: item.note }, "Note updated successfully")
+  );
+});
+
+//delete note
+
+const deleteNoteFromWishlistItem = asyncHandler(async (req, res) => {
+  const userId = req._id;
+  const { wishlistId, productId } = req.params;
+
+  if (!wishlistId || !productId) {
+    throw new ApiError(400, "Wishlist ID and Product ID are required", "MISSING_FIELDS");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found", "USER_NOT_FOUND");
+
+  const wishlist = user.wishlists.id(wishlistId);
+  if (!wishlist) throw new ApiError(404, "Wishlist not found", "WISHLIST_NOT_FOUND");
+
+  const item = wishlist.items.find(i => i.product.toString() === productId);
+  if (!item) throw new ApiError(404, "Product not found in wishlist", "PRODUCT_NOT_IN_WISHLIST");
+
+  if (!item.note) {
+    throw new ApiError(404, "Note not found", "NOTE_NOT_FOUND");
+  }
+
+  item.note = null;
+
+  await user.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, { wishlistId, productId }, "Note deleted successfully")
+  );
+});
+
+
+
+
+
 
 
 
@@ -220,7 +335,11 @@ module.exports={
     deleteWishlist,
     addItemInWishlist,
     deleteItemFromWishlist,
-    moveItemToAnotherWishlist
+    moveItemToAnotherWishlist,
+    addNoteToWishlistItem,
+    editNoteInWishlistItem,
+    deleteNoteFromWishlistItem
+    
 }
 
 
