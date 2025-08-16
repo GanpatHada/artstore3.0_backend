@@ -1,3 +1,4 @@
+const validator= require( "validator");
 const Product = require("../models/product");
 const User = require("../models/user");
 const ApiError = require("../utils/ApiError");
@@ -41,6 +42,61 @@ const createWishlist = asyncHandler(async (req, res) => {
     new ApiResponse(201, createdWishlist, "New wishlist added successfully")
   );
 });
+
+
+const editWishlist = asyncHandler(async (req, res) => {
+  const userId = req._id;
+  const { wishlistId } = req.params;
+  const { listName, isDefault, email} = req.body;
+
+  const user = await User.findById(userId);
+
+  const wishlist = user.wishlists.id(wishlistId);
+  if (!wishlist) {
+    throw new ApiError(404, "Wishlist not found", "WISHLIST_NOT_FOUND");
+  }
+
+  if (listName?.trim()) {
+    const exists = user.wishlists.some(
+      (w) =>
+        w._id.toString() !== wishlistId &&
+        w.listName.toLowerCase() === listName.trim().toLowerCase()
+    );
+    if (exists) {
+      throw new ApiError(409, "Wishlist with this name already exists", "WISHLIST_EXISTS");
+    }
+    wishlist.listName = listName.trim();
+  }
+
+ if (typeof email === "string") {
+  if (email.trim() !== "") { 
+    if (!validator.isEmail(email)) {
+      throw new ApiError(400, "Invalid email format", "INVALID_EMAIL");
+    }
+  }
+  wishlist.email = email;
+}
+
+
+  if (typeof isDefault === "boolean") {
+  if (isDefault) {
+    user.wishlists.forEach((w) => {
+      w.isDefault = w._id.toString() === wishlistId;
+    });
+  } else {
+    if (!wishlist.isDefault) {
+      wishlist.isDefault = false;
+    }
+  }
+}
+
+  await user.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, wishlist, "Wishlist updated successfully")
+  );
+});
+
 
 
 
@@ -332,6 +388,7 @@ const deleteNoteFromWishlistItem = asyncHandler(async (req, res) => {
 
 module.exports={
     createWishlist,
+    editWishlist,
     deleteWishlist,
     addItemInWishlist,
     deleteItemFromWishlist,

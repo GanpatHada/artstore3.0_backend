@@ -60,6 +60,7 @@ userSchema.pre("save", async function (next) {
     listName: "Shopping List",
     isDefault: true,
     privacy: "Private",
+    email:this.email,
     items: []
   }];
 }

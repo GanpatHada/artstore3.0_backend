@@ -21,7 +21,7 @@ const upload = require("../middlewares/multer.js");
 const verifyJwt = require("../middlewares/auth.js");
 const validateRequest = require("../middlewares/validateRequest.js");
 const { loginValidation, registerValidation, reviewValidation } = require("../validations/user.validator.js");
-const { createWishlist, deleteWishlist,addItemInWishlist, deleteItemFromWishlist, moveItemToAnotherWishlist, deleteNoteFromWishlistItem, editNoteInWishlistItem, addNoteToWishlistItem} = require("../controllers/wishlistController.js");
+const { createWishlist, editWishlist, deleteWishlist,addItemInWishlist, deleteItemFromWishlist, moveItemToAnotherWishlist, deleteNoteFromWishlistItem, editNoteInWishlistItem, addNoteToWishlistItem} = require("../controllers/wishlistController.js");
 const router = express.Router();
 
 router.route("/register").post(validateRequest(registerValidation), registerUser);
@@ -41,6 +41,7 @@ router.route("/cart/:productId").delete(verifyJwt, deleteFromCart);
 
 router.route("/wishlists").post(verifyJwt,createWishlist)
 router.route("/wishlists/:wishlistId").delete(verifyJwt,deleteWishlist)
+router.route("/wishlists/:wishlistId").patch(verifyJwt,editWishlist)
 router.route("/wishlists/:wishlistId/items").post(verifyJwt,addItemInWishlist)
 router.route("/wishlists/:wishlistId/items/:productId").delete(verifyJwt,deleteItemFromWishlist)
 router.route("/wishlists/:fromWishlistId/items/:productId/move/:toWishlistId").patch(verifyJwt, moveItemToAnotherWishlist);
