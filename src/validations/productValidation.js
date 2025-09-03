@@ -1,6 +1,6 @@
 const Joi = require("joi");
 
-export const productValidation = Joi.object({
+const productValidation = Joi.object({
   title: Joi.string().min(3).max(200).required().messages({
     "string.base": "Title must be a string",
     "string.min": "Title must be at least 3 characters long",
@@ -140,3 +140,6 @@ export const productValidation = Joi.object({
     "any.required": "Stock is required"
   })
 }).unknown(false); 
+
+
+module.exports={productValidation}
