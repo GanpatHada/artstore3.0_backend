@@ -1,4 +1,3 @@
-const { default: mongoose } = require("mongoose");
 const Product = require("../models/product");
 const User = require("../models/user");
 const ApiError = require("../utils/ApiError");
@@ -7,64 +6,43 @@ const asyncHandler = require("../utils/asynchandler");
 const uploadOnCloudinary = require("../utils/cloudinary");
 
 const addProduct = asyncHandler(async (req, res) => {
-  const {
-    title,
-    description,
-    heightInCm,
-    widthInCm,
-    category,
-    price,
-    discount,
-  } = req.body;
-
-
-  if (
-    [title, description, category, heightInCm, widthInCm, price].some(
-      (field) => field === undefined || field.trim().length === 0
-    )
-  ) {
-    throw new ApiError(400, "required fields are missing or empty");
+  if (!req.files || req.files.length === 0) {
+    throw new ApiError(400, "Product images are required");
   }
 
-
-  const productImages = req.files;
-  if (productImages.length === 0) {
-    throw new ApiError(400, "product Images are required");
-  }
   const productImagesPath = req.files.map((file) => file.path);
-  let productImagesUrls = [];
-  if (productImagesPath) {
-    for (const productImagePath of productImagesPath) {
-      const productImageUrl = await uploadOnCloudinary(productImagePath);
-      productImagesUrls.push(productImageUrl);
-    }
-  }
+  const productImagesUrls = await Promise.all(
+    productImagesPath.map((path) => uploadOnCloudinary(path))
+  );
+
   const newProduct = await Product.create({
-    title,
-    description,
-    dimensions: {
-      height: heightInCm,
-      width: widthInCm,
-    },
+    ...req.body,
+    actualPrice: req.body.price,
+    discount: req.body.discount || 0,
     productImages: productImagesUrls,
-    category,
-    price,
-    actualPrice: price,
-    artist: req._id,
-    discount: discount || 0,
+    artist: req.seller._id,
   });
+
   if (!newProduct) {
-    throw new ApiError(500, "Something went wrong while adding Product");
+    throw new ApiError(500, "Something went wrong while adding product");
   }
+
   return res
     .status(201)
-    .json(new ApiResponse(200, newProduct, "Product added successfully!"));
+    .json(new ApiResponse(201, newProduct, "Product added successfully!"));
 });
 
+
 const getProducts = asyncHandler(async (req, res) => {
-  const idsQuery = req.query.ids;
+  const { ids: idsQuery, fields } = req.query;
 
   let products;
+
+  const selectFields = fields
+    ? fields.split(",").join(" ") 
+    : "-__v -createdAt -updatedAt";
+
+  let query;
 
   if (idsQuery) {
     const ids = idsQuery
@@ -76,19 +54,39 @@ const getProducts = asyncHandler(async (req, res) => {
       throw new ApiError(400, "No valid product IDs provided", "INVALID_IDS");
     }
 
-    products = await Product.find({ _id: { $in: ids } }).select(
-      "-reviews -bankOffers -descriptions -dimensions -__v -createdAt -updatedAt"
-    );
+    query = Product.find({ _id: { $in: ids } }).select(selectFields);
   } else {
-    products = await Product.find().select(
-      "-reviews -bankOffers -descriptions -dimensions -__v -createdAt -updatedAt"
-    );
+    query = Product.find().select(selectFields);
   }
+
+ if (fields) {
+  if (fields.includes("artist")) {
+    query = query.populate("artist", "_id fullName");
+  }
+  if (fields.includes("reviews")) {
+    query = query.populate({
+      path: "reviews.user",
+      select: "fullName profileImage",
+      options: { strictPopulate: false }
+    });
+  }
+} else {
+  query = query
+    .populate("artist", "_id fullName")
+    .populate({
+      path: "reviews.user",
+      select: "fullName profileImage",
+      options: { strictPopulate: false }
+    });
+}
+
+  products = await query.lean();
 
   return res
     .status(200)
     .json(new ApiResponse(200, products, "Products fetched successfully"));
 });
+
 
 const getProductDetails = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -114,29 +112,66 @@ const getProductDetails = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
   }
 
-  return res.status(200).json(
-    new ApiResponse(200, product, "Product details fetched successfully")
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, product, "Product details fetched successfully")
+    );
 });
 
+const getProductsDetails = asyncHandler(async (req, res) => {
+  const { ids } = req.query;
+  const { fields } = req.query;
+
+  if (!ids) {
+    throw new ApiError(400, "Product IDs not provided", "PRODUCT_IDS_MISSING");
+  }
+
+  const productIds = ids.split(",");
+  const selectFields = fields ? fields.split(",").join(" ") : "";
+
+  let query = Product.find({ _id: { $in: productIds } }).select(selectFields);
+
+  if (!fields) {
+    query = query
+      .populate("artist", "_id fullName")
+      .populate("reviews.user", "fullName profileImage");
+  }
+
+  const products = await query.lean();
+
+  if (!products || products.length === 0) {
+    throw new ApiError(404, "Products not found", "PRODUCTS_NOT_FOUND");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, products, "Products fetched successfully"));
+});
 
 const getProductsUnderOneThousand = asyncHandler(async (_, res) => {
   try {
-    const products = await Product.find({ price: { $lt: 1000 } }).limit(4).sort({ price: 1 }).select("productImages title actualPrice price").lean();
-    const productsUnder1k = products.map(product => {
+    const products = await Product.find({ price: { $lt: 1000 } })
+      .limit(4)
+      .sort({ price: 1 })
+      .select("productImages title actualPrice price")
+      .lean();
+    const productsUnder1k = products.map((product) => {
       const { productImages, ...rest } = product;
       return {
         ...rest,
-        productImage: productImages?.[0] || null
+        productImage: productImages?.[0] || null,
       };
     });
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-         productsUnder1k,
-        "Products under one thousand fetched successfully"
-      )
-    );
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          productsUnder1k,
+          "Products under one thousand fetched successfully"
+        )
+      );
   } catch (error) {
     console.log(error);
     throw new ApiError(400, "Unable to load products");
@@ -145,12 +180,16 @@ const getProductsUnderOneThousand = asyncHandler(async (_, res) => {
 
 const getProductOnHighlyDiscount = asyncHandler(async (_, res) => {
   try {
-    const products = await Product.find({ discount: { $gt: 40 } }).limit(4).sort({ price: 1 }).select("productImages title discount price actualPrice").lean();
-    const productsOnHighDiscount = products.map(product => {
+    const products = await Product.find({ discount: { $gt: 40 } })
+      .limit(4)
+      .sort({ price: 1 })
+      .select("productImages title discount price actualPrice")
+      .lean();
+    const productsOnHighDiscount = products.map((product) => {
       const { productImages, ...rest } = product;
       return {
         ...rest,
-        productImage: productImages?.[0] || null
+        productImage: productImages?.[0] || null,
       };
     });
     return res
@@ -170,13 +209,19 @@ const getProductOnHighlyDiscount = asyncHandler(async (_, res) => {
 
 const getProductsOnLimitedTimeDeal = asyncHandler(async (_, res) => {
   try {
-    const products = await Product.find({tags: { $in: ["LIMITED TIME DEAL"] },}).limit(4).sort({ price: 1 }).select("productImages title tags").lean();
-    const productsOnLimitedTimeDeal = products.map(product => {
-      const { productImages,tags, ...rest } = product;
+    const products = await Product.find({
+      tags: { $in: ["LIMITED TIME DEAL"] },
+    })
+      .limit(4)
+      .sort({ price: 1 })
+      .select("productImages title tags")
+      .lean();
+    const productsOnLimitedTimeDeal = products.map((product) => {
+      const { productImages, tags, ...rest } = product;
       return {
         ...rest,
         productImage: productImages?.[0] || null,
-        tag:tags?.[0] || null
+        tag: tags?.[0] || null,
       };
     });
     return res
@@ -209,8 +254,8 @@ const productReview = asyncHandler(async (req, res) => {
   if (!user) throw new ApiError(400, "User not found", "USER_NOT_FOUND");
 
   const product = await Product.findById(productId);
-  if (!product) throw new ApiError(400, "Product not found", "PRODUCT_NOT_FOUND");
-
+  if (!product)
+    throw new ApiError(400, "Product not found", "PRODUCT_NOT_FOUND");
 
   const alreadyReviewed = product.reviews.some(
     (r) => r.user.toString() === userId.toString()
@@ -239,7 +284,6 @@ const productReview = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, addedReview, "Review added successfully"));
 });
 
-
 const deleteProductReview = asyncHandler(async (req, res) => {
   const { productId, reviewId } = req.params;
   const userId = req._id;
@@ -254,7 +298,7 @@ const deleteProductReview = asyncHandler(async (req, res) => {
     );
     if (!reviewExists) throw new ApiError(404, "Review not found");
 
-    if(reviewExists.user.toString()!==userId.toString())
+    if (reviewExists.user.toString() !== userId.toString())
       throw new ApiError(403, "You are not authorized to delete this review");
 
     product.reviews = product.reviews.filter(
@@ -333,22 +377,27 @@ const getMyProductReview = asyncHandler(async (req, res) => {
   const userReview = product.reviews.find(
     (review) => review.user.toString() === userId.toString()
   );
-  if (!userReview) throw new ApiError(404, "You have not reviewed this product","REVIEW NOT FOUND");
+  if (!userReview)
+    throw new ApiError(
+      404,
+      "You have not reviewed this product",
+      "REVIEW NOT FOUND"
+    );
   return res
     .status(200)
     .json(new ApiResponse(200, userReview, "Fetched your review successfully"));
 });
 
-
 module.exports = {
   addProduct,
   getProducts,
   getProductDetails,
+  getProductsDetails,
   getProductsUnderOneThousand,
   getProductOnHighlyDiscount,
   getProductsOnLimitedTimeDeal,
   productReview,
   deleteProductReview,
   updateProductReview,
-  getMyProductReview
+  getMyProductReview,
 };

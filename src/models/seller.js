@@ -29,22 +29,6 @@ const sellerSchema = new mongoose.Schema(
       type: String,
       default:null
     },
-    averageRatings:{
-      type:Number,
-      default:0
-    },
-    reviews:[{
-      user:{
-        type:mongoose.Types.ObjectId,
-        ref:'User'
-      },
-      userReview:String,
-      userRatings:Number,
-      createdAt:{
-        type:Date,
-        default:Date.now()
-      }
-    }],
     isVerified: {
       type: Boolean,
       default: false,
@@ -57,14 +41,9 @@ const sellerSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-sellerSchema.pre("save", function (next) {
+sellerSchema.pre("save", async function (next) {
   if (this.isModified("password"))
-      this.password = bcrypt.hash(this.password, 10);
-
-  if (this.isModified("reviews")) {
-     const total = this.reviews.reduce((sum, review) => sum + review.userRatings, 0);
-     this.averageRatings = total / this.reviews.length;
-  } 
+      this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
@@ -95,4 +74,5 @@ sellerSchema.methods.generateRefreshToken = async function () {
   );
 };
 
-module.exports = mongoose.model("Seller", sellerSchema);
+const Seller = mongoose.model("Seller", sellerSchema);
+module.exports=Seller;

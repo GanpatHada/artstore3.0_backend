@@ -5,7 +5,11 @@ const app = express();
 const cookieParser = require('cookie-parser');
 
 
+const authRouter = require("./src/routes/authRoute.js");
 const userRouter = require("./src/routes/userRoute.js");
+const cartRouter = require("./src/routes/cartRoute.js");
+const wishlistRouter = require("./src/routes/wishlistRoute.js");
+const addressRouter = require("./src/routes/addressRoute.js");
 const homeRouter = require("./src/routes/homeRoute.js");
 const productRouter = require("./src/routes/productRoute.js");
 const sellerRouter=require("./src/routes/sellerRoute.js");
@@ -32,7 +36,15 @@ app.use(cors({
 }));
 
 app.use("/", homeRouter);
+app.use("/api/v1/auth", authRouter);
+
+//user route
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/user/cart", cartRouter);
+app.use("/api/v1/user/wishlists", wishlistRouter);
+app.use("/api/v1/user/address",addressRouter);
+
+//seller route
 app.use("/api/v1/seller",sellerRouter)
 app.use("/api/v1/products",productRouter);
 app.use("/api/v1/order",orderRouter)
