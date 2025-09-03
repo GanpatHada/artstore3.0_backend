@@ -1,4 +1,4 @@
-import Joi from "joi";
+const Joi = require("joi");
 
 export const productValidation = Joi.object({
   title: Joi.string().min(3).max(200).required().messages({
