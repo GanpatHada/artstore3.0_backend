@@ -77,6 +77,9 @@ const login = asyncHandler(async (req, res) => {
   const safeAccount = account.toObject();
   delete safeAccount.password;
   delete safeAccount.refreshToken;
+  delete safeAccount.createdAt;
+  delete safeAccount.updatedAt;
+  delete safeAccount.__v;
 
   return res
     .status(200)

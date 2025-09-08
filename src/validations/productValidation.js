@@ -68,16 +68,6 @@ const productValidation = Joi.object({
     "any.required": "Descriptions field is required"
   }),
 
-  tags: Joi.alternatives().try(
-    Joi.array().items(Joi.string()),
-    Joi.string().custom((value, helpers) => {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return helpers.error("any.invalid");
-      }
-    })
-  ).optional(),
 
   dimensions: Joi.alternatives().try(
     Joi.object({
@@ -113,25 +103,6 @@ const productValidation = Joi.object({
     "any.required": "Weight is required"
   }),
 
-  bankOffers: Joi.alternatives().try(
-    Joi.array().items(
-      Joi.object({
-        bank: Joi.string().required(),
-        discount: Joi.number().min(0).max(100).required(),
-        details: Joi.string().required()
-      })
-    ),
-    Joi.string().custom((value, helpers) => {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return helpers.error("any.invalid");
-      }
-    })
-  ).required().messages({
-    "array.base": "Bank offers must be an array (or JSON string)",
-    "any.required": "Bank offers field is required"
-  }),
 
   stock: Joi.number().integer().min(0).required().messages({
     "number.base": "Stock must be a number",

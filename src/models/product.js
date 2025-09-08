@@ -124,11 +124,15 @@ const productSchema = new mongoose.Schema(
     },
 
     reviews: [reviewSchema],
+    stock: { type: Number, required: true },
+    initialStock: { type: Number },
 
     tags: [
       {
         type: String,
         enum: ["LIMITED TIME DEAL", "ARTSTORE PRIME"],
+        default: [],
+
       },
     ],
   },
@@ -140,6 +144,13 @@ productSchema.pre("save", function (next) {
   if (this.isModified("discount") || this.isModified("actualPrice")) {
     const discountAmount = Math.floor((this.discount / 100) * this.actualPrice);
     this.price = Math.floor(this.actualPrice - discountAmount);
+  }
+  next();
+});
+
+productSchema.pre("save", function (next) {
+  if (this.isNew) {
+    this.initialStock = this.stock;
   }
   next();
 });
