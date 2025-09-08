@@ -1,2 +1,9 @@
 const alphaNumber="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-module.exports={alphaNumber}
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://artstoreonline.vercel.app"
+]
+
+module.exports={alphaNumber,allowedOrigins}

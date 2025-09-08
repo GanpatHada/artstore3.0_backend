@@ -1,7 +1,5 @@
 const Joi = require("joi");
 
-const Joi = require("joi");
-
 const addressValidation = Joi.object({
   receiverName: Joi.string().trim().required().messages({
     "any.required": "Receiver name is required",
