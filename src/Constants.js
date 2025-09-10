@@ -3,7 +3,8 @@ const alphaNumber="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://artstoreonline.vercel.app"
+  "https://artstoreonline.vercel.app",
+  "https://artstoreseller.vercel.app"
 ]
 
 module.exports={alphaNumber,allowedOrigins}
