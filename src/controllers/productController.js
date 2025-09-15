@@ -4,6 +4,7 @@ const ApiError = require("../utils/ApiError");
 const ApiResponse = require("../utils/ApiResponse");
 const asyncHandler = require("../utils/asynchandler");
 const uploadOnCloudinary = require("../utils/cloudinary");
+const mongoose = require("mongoose");
 
 const addProduct = asyncHandler(async (req, res) => {
   if (!req.files || req.files.length === 0) {
@@ -27,9 +28,12 @@ const addProduct = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while adding product");
   }
 
+  const productResponse = await Product.findById(newProduct._id)
+  .select("-__v -artist -bankOffers -tags -descriptions -surface -medium -weight -dimensions -reviews");
+
   return res
     .status(201)
-    .json(new ApiResponse(201, newProduct, "Product added successfully!"));
+    .json(new ApiResponse(201, productResponse, "Product added successfully!"));
 });
 
 

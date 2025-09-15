@@ -26,9 +26,9 @@ const bankOfferSchema = new mongoose.Schema(
 
 const dimensionsSchema = new mongoose.Schema(
   {
-    height: { type: Number, required: true },
-    width: { type: Number, required: true },
-    thickness: { type: Number, required: true },
+    height: { type: String, required: true },
+    width: { type: String, required: true },
+    thickness: { type: String, required: true },
   },
   { _id: false }
 );
@@ -102,7 +102,7 @@ const productSchema = new mongoose.Schema(
     },
 
     weight: {
-      type: Number,
+      type: String,
       required: true,
     },
 
