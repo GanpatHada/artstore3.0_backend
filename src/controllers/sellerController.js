@@ -23,7 +23,8 @@ const sellerDetails = asyncHandler(async (req, res) => {
 
 const getSellerProducts = asyncHandler(async (req, res) => {
     const seller = req.seller;
-    const products = await Product.find({ artist: seller._id }).select("-__v -reviews -bankOffers ");
+    const products = await Product.find({ artist: seller._id })
+    .select("isActive title productImages createdAt initialStock stock price actualPrice discount");
     return res
       .status(200)
       .json(new ApiResponse(200, products, "seller products found"));
