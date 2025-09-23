@@ -31,5 +31,41 @@ const getSellerProducts = asyncHandler(async (req, res) => {
 });
 
 
+// ================= Get seller products stats ======================
 
-module.exports = { sellerDetails, getSellerProducts };
+
+
+
+const getSellerProductStats = asyncHandler(async (req, res) => {
+  const sellerId = req.seller._id;
+
+  const products = await Product.find({ artist: sellerId }).lean();
+
+  const totalProducts = products.length;
+  const totalQuantity = products.reduce((acc, p) => acc + (p.initialStock || 0), 0); // ✅ total quantity
+  const soldProducts = products.reduce((acc, p) => acc + ((p.initialStock || 0) - (p.stock || 0)), 0);
+  const unsoldProducts = products.reduce((acc, p) => acc + (p.stock || 0), 0);
+  const availableProducts = products.filter(p => p.isActive).length;
+  const unavailableProducts = products.filter(p => !p.isActive).length;
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        totalProducts,
+        totalQuantity,
+        soldProducts,
+        unsoldProducts,
+        availableProducts,
+        unavailableProducts
+      },
+      "Seller product stats fetched successfully"
+    )
+  );
+});
+
+
+
+
+
+module.exports = { sellerDetails, getSellerProducts,getSellerProductStats };
