@@ -37,6 +37,44 @@ const addProduct = asyncHandler(async (req, res) => {
 });
 
 
+const toggleAvailability = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const sellerId = req.seller._id;
+
+  if (!productId) {
+    throw new ApiError(400, "Product ID not provided", "PRODUCT_ID_MISSING");
+  }
+
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
+  }
+
+  if (product.artist.toString() !== sellerId.toString()) {
+    throw new ApiError(
+      403,
+      "You are not authorized to modify this product",
+      "FORBIDDEN"
+    );
+  }
+
+  product.isActive = !product.isActive;
+  await product.save();
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { productId: product._id, isActive: product.isActive },
+        `Product availability toggled successfully`
+      )
+    );
+});
+
+
+
 const getProducts = asyncHandler(async (req, res) => {
   const { ids: idsQuery, fields } = req.query;
 
@@ -394,6 +432,7 @@ const getMyProductReview = asyncHandler(async (req, res) => {
 
 module.exports = {
   addProduct,
+  toggleAvailability,
   getProducts,
   getProductDetails,
   getProductsDetails,
