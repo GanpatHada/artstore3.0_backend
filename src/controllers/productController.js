@@ -13,7 +13,7 @@ const addProduct = asyncHandler(async (req, res) => {
 
   const productImagesPath = req.files.map((file) => file.path);
   const productImagesUrls = await Promise.all(
-    productImagesPath.map((path) => uploadOnCloudinary(path))
+    productImagesPath.map((path) => uploadOnCloudinary(path,'artstore/artworks'))
   );
 
   const newProduct = await Product.create({
