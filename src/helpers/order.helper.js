@@ -8,4 +8,10 @@ function getProvidedSignature(razorpay_order_id,razorpay_payment_id){
     return generated_signature;
 }
 
-module.exports={getProvidedSignature}
+function verifySignature(orderId, paymentId, signature){
+  const generatedSignature = getProvidedSignature(orderId, paymentId);
+  return generatedSignature == signature;
+};
+
+
+module.exports={verifySignature}
