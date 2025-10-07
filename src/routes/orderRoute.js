@@ -5,7 +5,7 @@ const validateRequest = require('../middlewares/validateRequest.js');
 const { verifyPaymentSchema } = require('../validations/payment.validation.js');
 const { verifyUserJwt } = require('../middlewares/auth.js');
 
-router.route("/").post(createOrder);
+router.route("/").post(verifyUserJwt,createOrder);
 router.route("/verifyPayment").post(verifyUserJwt,validateRequest(verifyPaymentSchema),verifyPayment)
 router.route("/:orderId").get(getOrderDetails)
 

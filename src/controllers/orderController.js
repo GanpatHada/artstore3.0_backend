@@ -19,6 +19,10 @@ const createOrder = asyncHandler(async (req, res) => {
     amount: amount * 100,
     currency: "INR",
     receipt: `RECNO${getUniqueReceiptNo()}`,
+    notes: {
+    createdBy: req.user._id.toString(),
+    time:Date.now()
+  },
   };
 
   try {
