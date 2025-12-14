@@ -350,7 +350,7 @@ const getSpecialProducts = asyncHandler(async (req, res) => {
 
   for (const t of types) {
     let filter = {};
-    let select = "productImages title price actualPrice discount tags";
+    let select = "productImages price discount tags";
     let sort = { price: 1 };
 
     switch (t) {
