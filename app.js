@@ -17,6 +17,7 @@ const addressRouter = require("./src/routes/addressRoute.js");
 const homeRouter = require("./src/routes/homeRoute.js");
 const productRouter = require("./src/routes/productRoute.js");
 const sellerRouter = require("./src/routes/sellerRoute.js");
+const storeRouter = require("./src/routes/storeRoute.js");
 const orderRouter = require("./src/routes/orderRoute.js");
 
 const errorHandler = require("./src/middlewares/errorhandler.js");
@@ -80,10 +81,11 @@ app.use("/api/v1/user/cart", cartRouter);
 app.use("/api/v1/user/wishlists", wishlistRouter);
 app.use("/api/v1/user/address", addressRouter);
 app.use("/api/v1/seller", sellerRouter);
+app.use("/api/v1/seller/store",storeRouter)
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/order", orderRouter);
 
-// Error handler
+
 app.use(errorHandler);
 
 module.exports = app;

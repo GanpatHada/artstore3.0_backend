@@ -35,7 +35,9 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   if (filePath) {
-    const profileImageUrl = await uploadOnCloudinary(filePath,"artstore/users");
+    const profileImageUrl = await uploadOnCloudinary(filePath,
+      `artstore/users/${user._id}`,
+     'profileImage');
     if (!profileImageUrl) {
       throw new ApiError(500, "Image upload failed");
     }

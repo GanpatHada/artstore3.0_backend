@@ -7,12 +7,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-async function uploadOnCloudinary(localFilePath, folderPath) {
+async function uploadOnCloudinary(localFilePath, folderPath, publicId) {
   if (!localFilePath) return null;
 
   try {
     const uploadResult = await cloudinary.uploader.upload(localFilePath, {
-      folder: folderPath,
+      folder: folderPath,     
+      public_id: publicId,    
+      overwrite: true,        
       resource_type: "auto",
     });
 
@@ -23,7 +25,7 @@ async function uploadOnCloudinary(localFilePath, folderPath) {
     return uploadResult.secure_url;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
-    
+
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
@@ -31,5 +33,6 @@ async function uploadOnCloudinary(localFilePath, folderPath) {
     return null;
   }
 }
+
 
 module.exports = uploadOnCloudinary;

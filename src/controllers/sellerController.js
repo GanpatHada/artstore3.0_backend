@@ -9,7 +9,6 @@ const asyncHandler = require("../utils/asynchandler");
 
 const sellerDetails = asyncHandler(async (req, res) => {
     const seller = await Seller.findById(req.seller._id).select("-password -refreshToken -createdAt -updatedAt -__v");
-
     return res
       .status(200)
       .json(new ApiResponse(200, seller, "seller details found"));
@@ -24,7 +23,7 @@ const sellerDetails = asyncHandler(async (req, res) => {
 const getSellerProducts = asyncHandler(async (req, res) => {
     const seller = req.seller;
     const products = await Product.find({ artist: seller._id })
-    .select("isActive title productImages createdAt initialStock stock price actualPrice discount");
+    .select("isActive title productImages createdAt stockSold stock price actualPrice discount surface medium");
     return res
       .status(200)
       .json(new ApiResponse(200, products, "seller products found"));
@@ -41,28 +40,44 @@ const getSellerProductStats = asyncHandler(async (req, res) => {
 
   const products = await Product.find({ artist: sellerId }).lean();
 
-  const totalProducts = products.length;
-  const totalQuantity = products.reduce((acc, p) => acc + (p.initialStock || 0), 0); // ✅ total quantity
-  const soldProducts = products.reduce((acc, p) => acc + ((p.initialStock || 0) - (p.stock || 0)), 0);
-  const unsoldProducts = products.reduce((acc, p) => acc + (p.stock || 0), 0);
-  const availableProducts = products.filter(p => p.isActive).length;
-  const unavailableProducts = products.filter(p => !p.isActive).length;
+  let totalProducts = products.length;
+  let totalStockAdded = 0;
+  let totalSold = 0;
+  let remainingStock = 0;
+  let availableProducts = 0;
+  let unavailableProducts = 0;
+
+  products.forEach((product) => {
+    const stock = product.stock ?? 0;
+    const sold = product.stockSold ?? 0;
+
+    totalStockAdded += stock + sold;
+    totalSold += sold;
+    remainingStock += stock;
+
+    if (product.isActive) {
+      availableProducts++;
+    } else {
+      unavailableProducts++;
+    }
+  });
 
   return res.status(200).json(
     new ApiResponse(
       200,
       {
         totalProducts,
-        totalQuantity,
-        soldProducts,
-        unsoldProducts,
+        totalStockAdded,
+        totalSold,
+        remainingStock,
         availableProducts,
-        unavailableProducts
+        unavailableProducts,
       },
       "Seller product stats fetched successfully"
     )
   );
 });
+
 
 
 

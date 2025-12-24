@@ -1,5 +1,4 @@
 const Product = require("../models/product");
-const User = require("../models/user");
 const ApiError = require("../utils/ApiError");
 const ApiResponse = require("../utils/ApiResponse");
 const asyncHandler = require("../utils/asynchandler");
@@ -11,30 +10,40 @@ const addProduct = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Product images are required");
   }
 
-  const productImagesPath = req.files.map((file) => file.path);
-  const productImagesUrls = await Promise.all(
-    productImagesPath.map((path) => uploadOnCloudinary(path,'artstore/artworks'))
-  );
-
-  const newProduct = await Product.create({
+  const product = await Product.create({
     ...req.body,
     actualPrice: req.body.price,
     discount: req.body.discount || 0,
-    productImages: productImagesUrls,
+    productImages: [],
     artist: req.seller._id,
   });
 
-  if (!newProduct) {
-    throw new ApiError(500, "Something went wrong while adding product");
+  if (!product) {
+    throw new ApiError(500, "Failed to create product");
   }
 
-  const productResponse = await Product.findById(newProduct._id)
-  .select("-__v -artist -bankOffers -tags -descriptions -surface -medium -weight -dimensions -reviews");
+  const uploadedImages = await Promise.all(
+    req.files.map((file, index) =>
+      uploadOnCloudinary(
+        file.path,
+        `artstore/artworks/${product._id}`,
+        `productImage-${index + 1}`
+      )
+    )
+  );
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, productResponse, "Product added successfully!"));
+  product.productImages = uploadedImages;
+  await product.save();
+  return res.status(201).json(
+    new ApiResponse(
+      201,
+      { productId: product._id },
+      "Product added successfully!"
+    )
+  );
 });
+
+
 
 
 const toggleAvailability = asyncHandler(async (req, res) => {
@@ -160,39 +169,6 @@ const getProductDetails = asyncHandler(async (req, res) => {
       new ApiResponse(200, product, "Product details fetched successfully")
     );
 });
-
-const getProductsDetails = asyncHandler(async (req, res) => {
-  const { ids } = req.query;
-  const { fields } = req.query;
-
-  if (!ids) {
-    throw new ApiError(400, "Product IDs not provided", "PRODUCT_IDS_MISSING");
-  }
-
-  const productIds = ids.split(",");
-  const selectFields = fields ? fields.split(",").join(" ") : "";
-
-  let query = Product.find({ _id: { $in: productIds } }).select(selectFields);
-
-  if (!fields) {
-    query = query
-      .populate("artist", "_id fullName")
-      .populate("reviews.user", "fullName profileImage");
-  }
-
-  const products = await query.lean();
-
-  if (!products || products.length === 0) {
-    throw new ApiError(404, "Products not found", "PRODUCTS_NOT_FOUND");
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, products, "Products fetched successfully"));
-});
-
-
-
 
 
 
@@ -408,6 +384,64 @@ const getMyProductReview = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, userReview, "Fetched your review successfully"));
 });
 
+const editProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const sellerId = req.seller._id;
+
+  if (!productId) {
+    throw new ApiError(400, "Product ID not provided", "PRODUCT_ID_MISSING");
+  }
+
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
+  }
+
+  if (product.artist.toString() !== sellerId.toString()) {
+    throw new ApiError(
+      403,
+      "You are not authorized to modify this product",
+      "FORBIDDEN"
+    );
+  }
+
+  // Handle image updates
+  if (req.files && req.files.length > 0) {
+    const uploadedImages = await Promise.all(
+      req.files.map((file, index) =>
+        uploadOnCloudinary(
+          file.path,
+          `artstore/artworks/${productId}`,
+          `productImage-${index + 1}`
+        )
+      )
+    );
+
+    req.body.productImages = uploadedImages;
+  }
+
+  await Product.findByIdAndUpdate(
+    productId,
+    {
+      ...req.body,
+      actualPrice: req.body.price ?? product.actualPrice,
+      discount: req.body.discount ?? product.discount,
+    },
+    { runValidators: true }
+  );
+
+  // ✅ Only send productId
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { productId },
+      "Product updated successfully!"
+    )
+  );
+});
+
+
 module.exports = {
   addProduct,
   toggleAvailability,
@@ -418,4 +452,5 @@ module.exports = {
   deleteProductReview,
   updateProductReview,
   getMyProductReview,
+  editProduct
 };

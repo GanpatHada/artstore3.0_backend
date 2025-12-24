@@ -125,7 +125,7 @@ const productSchema = new mongoose.Schema(
 
     reviews: [reviewSchema],
     stock: { type: Number, required: true },
-    initialStock: { type: Number },
+    stockSold: { type: Number,required:true,default:0 },
     isActive:Boolean,
 
     tags: [
@@ -150,9 +150,8 @@ productSchema.pre("save", function (next) {
 });
 
 productSchema.pre("save", function (next) {
-  if (this.isNew) {
-    this.initialStock = this.stock;
-    this.isActive=true;
+  if (this.isModified("stock")) {
+    this.isActive = true;
   }
   next();
 });

@@ -1,19 +1,21 @@
 const ApiError = require("../utils/ApiError");
 
-const validateRequest = (schema) => (req, res, next) => {
-  const { error, value } = schema.validate(req.body, { 
-    abortEarly: false,
-    stripUnknown: true
+const validateRequest = (schema) => (req,_, next) => {
+  const { error, value } = schema.validate(req.body, {
+    abortEarly: true,
+    stripUnknown: true,
   });
 
   if (error) {
-    const messages = error.details.map((err) => err.message);
-    throw new ApiError(400, "Validation error", "VALIDATION_FAILED", messages);
+    throw new ApiError(
+      400,
+      error.details[0].message,
+      "VALIDATION_FAILED"
+    );
   }
-  req.body = value;
 
+  req.body = value;
   next();
 };
 
 module.exports = validateRequest;
-
