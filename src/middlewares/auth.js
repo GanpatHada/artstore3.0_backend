@@ -6,7 +6,12 @@ const Seller = require("../models/seller");
 
 const verifyToken = async (req) => {
   const token = req.header("Authorization")?.replace("Bearer ", "").trim();
-  if (!token) throw new ApiError(401, "Unauthorized access: token not found", "MISSED_TOKEN");
+  if (!token)
+    throw new ApiError(
+      401,
+      "Unauthorized access: token not found",
+      "MISSED_TOKEN",
+    );
 
   try {
     return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -30,10 +35,11 @@ const verifyUserJwt = asyncHandler(async (req, _, next) => {
 const verifySellerJwt = asyncHandler(async (req, _, next) => {
   const decoded = await verifyToken(req);
   const seller = await Seller.findById(decoded._id);
-  if (!seller) throw new ApiError(401, "Seller does not exist", "SELLER_NOT_FOUND");
+  if (!seller)
+    throw new ApiError(401, "Seller does not exist", "SELLER_NOT_FOUND");
 
   req.seller = seller;
   next();
 });
 
-module.exports = {verifyUserJwt, verifySellerJwt};
+module.exports = { verifyUserJwt, verifySellerJwt };

@@ -1,6 +1,10 @@
-const express = require('express');
-const { verifyUserJwt } = require('../middlewares/auth');
-const { addToCart,deleteFromCart,updateCartItemQuantity} = require('../controllers/cartController');
+const express = require("express");
+const { verifyUserJwt } = require("../middlewares/auth");
+const {
+  addToCart,
+  deleteFromCart,
+  updateCartItemQuantity,
+} = require("../controllers/cartController");
 
 const router = express.Router();
 router.post("/:productId", verifyUserJwt, addToCart);

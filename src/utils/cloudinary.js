@@ -12,27 +12,20 @@ async function uploadOnCloudinary(localFilePath, folderPath, publicId) {
 
   try {
     const uploadResult = await cloudinary.uploader.upload(localFilePath, {
-      folder: folderPath,     
-      public_id: publicId,    
-      overwrite: true,        
+      folder: folderPath,
+      public_id: publicId,
+      overwrite: true,
       resource_type: "auto",
     });
-
-    if (fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath);
-    }
-
     return uploadResult.secure_url;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
-
+    return null;
+  } finally {
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
-
-    return null;
   }
 }
-
 
 module.exports = uploadOnCloudinary;

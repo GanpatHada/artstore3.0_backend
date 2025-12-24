@@ -27,7 +27,7 @@ const sellerSchema = new mongoose.Schema(
     },
     profileImage: {
       type: String,
-      default:null
+      default: null,
     },
     isVerified: {
       type: Boolean,
@@ -39,11 +39,11 @@ const sellerSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 sellerSchema.pre("save", async function (next) {
   if (this.isModified("password"))
-      this.password = await bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
@@ -58,8 +58,8 @@ sellerSchema.methods.generateAccessToken = async function () {
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY 
-    }
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    },
   );
 };
 sellerSchema.methods.generateRefreshToken = async function () {
@@ -69,10 +69,10 @@ sellerSchema.methods.generateRefreshToken = async function () {
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY 
-    }
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    },
   );
 };
 
 const Seller = mongoose.model("Seller", sellerSchema);
-module.exports=Seller;
+module.exports = Seller;

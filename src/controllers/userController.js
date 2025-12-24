@@ -7,23 +7,15 @@ const Product = require("../models/product.js");
 const { cookieOptions } = require("../helpers/auth.helpers.js");
 const { default: mongoose } = require("mongoose");
 
-
 // ================= User details ======================
-
 
 const userDetails = asyncHandler(async (req, res) => {
   return res
-  .status(200)
-  .json(new ApiResponse(200, req.user, "user details found"));
-
+    .status(200)
+    .json(new ApiResponse(200, req.user, "user details found"));
 });
 
-
-
-
 // ================= Update user details ======================
-
-
 
 const updateUser = asyncHandler(async (req, res) => {
   const { fullName, profileImage } = req.body;
@@ -35,9 +27,11 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   if (filePath) {
-    const profileImageUrl = await uploadOnCloudinary(filePath,
+    const profileImageUrl = await uploadOnCloudinary(
+      filePath,
       `artstore/users/${user._id}`,
-     'profileImage');
+      "profileImage",
+    );
     if (!profileImageUrl) {
       throw new ApiError(500, "Image upload failed");
     }
@@ -48,23 +42,23 @@ const updateUser = asyncHandler(async (req, res) => {
     user.profileImage = null;
   }
   await user.save();
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      { profileImage: user.profileImage, fullName: user.fullName },
-      "Profile updated successfully"
-    )
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { profileImage: user.profileImage, fullName: user.fullName },
+        "Profile updated successfully",
+      ),
+    );
 });
-
 
 // ================= logout user ======================
 
-
-
 const logoutUser = asyncHandler(async (req, res) => {
   const user = req.user;
-  if (!user) throw new ApiError(401, "User not authenticated","UNAUTHORIZED_ACCESS");
+  if (!user)
+    throw new ApiError(401, "User not authenticated", "UNAUTHORIZED_ACCESS");
 
   user.refreshToken = undefined;
   await user.save();
@@ -75,25 +69,20 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User logged out successfully"));
 });
 
-
 //helper function
 
 const appendUserReviewToItem = async (item, userId) => {
   const product = await Product.findById(item.product);
   if (!product) return { ...item.toObject(), myReview: null };
 
-  const myReview = product.reviews.find(
-    (rev) => rev.user.toString() === userId.toString()
-  ) || null;
+  const myReview =
+    product.reviews.find((rev) => rev.user.toString() === userId.toString()) ||
+    null;
 
   return { ...item.toObject(), myReview };
 };
 
-
-
 // ================= getting user orders ======================
-
-
 
 const getUserOrders = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -107,21 +96,24 @@ const getUserOrders = asyncHandler(async (req, res) => {
   const updatedOrders = await Promise.all(
     user.myOrders.map(async (order) => {
       const updatedItems = await Promise.all(
-        order.orderedItems.map((item) => appendUserReviewToItem(item, user._id))
+        order.orderedItems.map((item) =>
+          appendUserReviewToItem(item, user._id),
+        ),
       );
 
       return {
         ...order.toObject(),
         orderedItems: updatedItems,
       };
-    })
+    }),
   );
 
-  return res.status(200).json(
-    new ApiResponse(200, updatedOrders, "User orders fetched successfully")
-  );
-})
-
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedOrders, "User orders fetched successfully"),
+    );
+});
 
 //seller related routes
 

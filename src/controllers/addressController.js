@@ -6,7 +6,7 @@ const addAddress = asyncHandler(async (req, res) => {
   const user = req.user;
 
   const newAddress = Object.assign({}, req.body, {
-    landmark: req.body.landmark || ""
+    landmark: req.body.landmark || "",
   });
 
   user.addresses.push(newAddress);
@@ -14,15 +14,10 @@ const addAddress = asyncHandler(async (req, res) => {
 
   const recentAddressObj = user.addresses.at(-1);
 
-  return res.status(201).json(
-    new ApiResponse(
-      201,
-      recentAddressObj,
-      "Address added successfully"
-    )
-  );
+  return res
+    .status(201)
+    .json(new ApiResponse(201, recentAddressObj, "Address added successfully"));
 });
-
 
 const deleteAddress = asyncHandler(async (req, res) => {
   const { addressId } = req.params;
@@ -36,7 +31,7 @@ const deleteAddress = asyncHandler(async (req, res) => {
   const initialLength = user.addresses.length;
 
   user.addresses = user.addresses.filter(
-    (address) => address._id.toString() !== addressId
+    (address) => address._id.toString() !== addressId,
   );
 
   if (user.addresses.length === initialLength) {
@@ -45,13 +40,9 @@ const deleteAddress = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      addressId,
-      "Address deleted successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, addressId, "Address deleted successfully"));
 });
 
 const makePrimaryAddress = asyncHandler(async (req, res) => {
@@ -64,7 +55,7 @@ const makePrimaryAddress = asyncHandler(async (req, res) => {
   const user = req.user;
 
   const primaryAddress = user.addresses.find(
-    (address) => address._id.toString() === addressId
+    (address) => address._id.toString() === addressId,
   );
 
   if (!primaryAddress) {
@@ -72,19 +63,17 @@ const makePrimaryAddress = asyncHandler(async (req, res) => {
   }
 
   const otherAddresses = user.addresses.filter(
-    (address) => address._id.toString() !== addressId
+    (address) => address._id.toString() !== addressId,
   );
   user.addresses = [primaryAddress, ...otherAddresses];
 
   await user.save();
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      addressId,
-      "Address has been marked as primary"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, addressId, "Address has been marked as primary"),
+    );
 });
 
 const editAddress = asyncHandler(async (req, res) => {
@@ -107,10 +96,9 @@ const editAddress = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  return res.status(200).json(
-    new ApiResponse(200, address, "Address updated successfully")
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, address, "Address updated successfully"));
 });
 
-
-module.exports = { addAddress,deleteAddress,makePrimaryAddress,editAddress}
+module.exports = { addAddress, deleteAddress, makePrimaryAddress, editAddress };

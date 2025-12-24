@@ -21,7 +21,7 @@ const productValidation = Joi.object({
       "TANJORE",
       "KERALA MURAL",
       "KALIGHAT",
-      "OTHERS"
+      "OTHERS",
     )
     .required()
     .messages({
@@ -56,7 +56,7 @@ const productValidation = Joi.object({
             "string.base": "Each description must be a string",
             "string.min":
               "Each description must be at least 10 characters long",
-          })
+          }),
         )
         .min(4),
       Joi.string().custom((value, helpers) => {
@@ -69,7 +69,7 @@ const productValidation = Joi.object({
         } catch {
           return helpers.error("any.invalid");
         }
-      })
+      }),
     )
     .required()
     .messages({
@@ -103,7 +103,7 @@ const productValidation = Joi.object({
         } catch {
           return helpers.error("any.invalid");
         }
-      })
+      }),
     )
     .required()
     .messages({
@@ -124,12 +124,13 @@ const productValidation = Joi.object({
   }),
 
   weight: Joi.string()
-  .pattern(/^\d+(\.\d+)?\s?gm$/i)
-  .required()
-  .messages({
-    "string.pattern.base": "Weight must be a valid number followed by 'gm' (e.g. '12 gm', '2.5 gm')",
-    "any.required": "Weight is required"
-  }),
+    .pattern(/^\d+(\.\d+)?\s?gm$/i)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Weight must be a valid number followed by 'gm' (e.g. '12 gm', '2.5 gm')",
+      "any.required": "Weight is required",
+    }),
 
   stock: Joi.number().integer().min(0).required().messages({
     "number.base": "Stock must be a number",

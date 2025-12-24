@@ -34,9 +34,10 @@ const addressValidation = Joi.object({
     "any.required": "Country is required",
     "string.empty": "Country cannot be empty",
   }),
-}).unknown(false).messages({
-  "object.unknown": "Extra field '{{#label}}' is not allowed",
-});
+})
+  .unknown(false)
+  .messages({
+    "object.unknown": "Extra field '{{#label}}' is not allowed",
+  });
 
-
-module.exports=addressValidation
+module.exports = addressValidation;

@@ -4,7 +4,7 @@ const asyncHandler = require("../utils/asynchandler");
 const razorpay = require("../config/rzp.config");
 const ApiResponse = require("../utils/ApiResponse");
 const { alphaNumber } = require("../Constants");
-const {verifySignature } = require("../helpers/order.helper");
+const { verifySignature } = require("../helpers/order.helper");
 const Order = require("../models/order");
 const Product = require("../models/product");
 
@@ -20,9 +20,9 @@ const createOrder = asyncHandler(async (req, res) => {
     currency: "INR",
     receipt: `RECNO${getUniqueReceiptNo()}`,
     notes: {
-    createdBy: req.user._id.toString(),
-    time:Date.now()
-  },
+      createdBy: req.user._id.toString(),
+      time: Date.now(),
+    },
   };
 
   try {
@@ -37,7 +37,6 @@ const createOrder = asyncHandler(async (req, res) => {
 });
 
 //------------------------------------------------------------------------------------
-
 
 const mapOrderedItems = async (productsList) => {
   const orderedItems = [];
@@ -65,7 +64,7 @@ const mapOrderedItems = async (productsList) => {
 
 const getAddressDetails = (user, addressId) => {
   const address = user.addresses.find(
-    (address) => address._id.toString() === addressId.toString()
+    (address) => address._id.toString() === addressId.toString(),
   );
   if (!address)
     throw new ApiError(404, "Address not found", "ADDRESS_NOT_FOUND");
@@ -100,10 +99,14 @@ const verifyPayment = asyncHandler(async (req, res) => {
   const signatureVerified = verifySignature(
     razorpay_order_id,
     razorpay_payment_id,
-    razorpay_signature
+    razorpay_signature,
   );
   if (!signatureVerified)
-    throw new ApiError(400, "Invalid payment credential", "SIGNATURE_MISSMATCH");
+    throw new ApiError(
+      400,
+      "Invalid payment credential",
+      "SIGNATURE_MISSMATCH",
+    );
 
   const orderedItems = await mapOrderedItems(products);
   const shippingAddress = getAddressDetails(user, addressId);
@@ -128,9 +131,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
   user.myOrders.push(order._id);
   user.cart = user.cart.filter(
     (item) =>
-      !products.some(
-        (p) => p.productId.toString() === item.product.toString()
-      )
+      !products.some((p) => p.productId.toString() === item.product.toString()),
   );
   await user.save();
 
@@ -138,22 +139,22 @@ const verifyPayment = asyncHandler(async (req, res) => {
     products.map((item) =>
       Product.findByIdAndUpdate(item.productId, {
         $inc: { stock: -item.quantity },
-      })
-    )
+      }),
+    ),
   );
 
   const enrichedItems = await Promise.all(
     order.orderedItems.map(async (item) => {
       const product = await Product.findById(item.product);
       const myReview = product.reviews.find(
-        (rev) => rev.user.toString() === userId.toString()
+        (rev) => rev.user.toString() === userId.toString(),
       );
 
       return {
         ...item.toObject(),
         myReview: myReview || null,
       };
-    })
+    }),
   );
 
   res.status(201).json(
@@ -165,11 +166,10 @@ const verifyPayment = asyncHandler(async (req, res) => {
         updatedCart: user.cart,
         updatedMyOrders: user.myOrders,
       },
-      "Payment is done and order is placed successfully"
-    )
+      "Payment is done and order is placed successfully",
+    ),
   );
 });
-
 
 const getOrderDetails = asyncHandler(async (req, res) => {
   const orderId = req.params.orderId;

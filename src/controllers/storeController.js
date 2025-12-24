@@ -50,7 +50,7 @@ const createStore = asyncHandler(async (req, res) => {
     const businessLogoUrl = await uploadOnCloudinary(
       req.file.path,
       `artstore/store/${store._id}`,
-      "businessLogo"
+      "businessLogo",
     );
     if (!businessLogoUrl) throw new ApiError(500, "Image upload failed");
     store.businessLogo = businessLogoUrl;
@@ -99,7 +99,7 @@ const updateStore = asyncHandler(async (req, res) => {
     const businessLogoUrl = await uploadOnCloudinary(
       req.file.path,
       `artstore/store/${store._id}`,
-      "businessLogo"
+      "businessLogo",
     );
     if (!businessLogoUrl) throw new ApiError(500, "Image upload failed");
     store.businessLogo = businessLogoUrl;
@@ -130,7 +130,7 @@ const getStoreDetails = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, existingStore, "Store details fetched successfully")
+      new ApiResponse(200, existingStore, "Store details fetched successfully"),
     );
 });
 

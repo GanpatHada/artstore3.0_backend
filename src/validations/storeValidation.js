@@ -37,8 +37,8 @@ const storeValidation = Joi.object({
   gstin: Joi.alternatives()
     .try(
       Joi.string().length(15), // if provided → validate
-      Joi.valid(null),         // explicit null
-      Joi.valid("null")        // FormData "null"
+      Joi.valid(null), // explicit null
+      Joi.valid("null"), // FormData "null"
     )
     .optional(),
 
@@ -48,7 +48,7 @@ const storeValidation = Joi.object({
       "Proprietorship",
       "Partnership",
       "LLP",
-      "Private Limited"
+      "Private Limited",
     )
     .default("Individual"),
 }).unknown(false);

@@ -5,8 +5,6 @@ const jwt = require("jsonwebtoken");
 const { cartItemSchema } = require("./cart");
 const { wishlistSchema } = require("./wishlist");
 
-
-
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -29,26 +27,30 @@ const userSchema = new mongoose.Schema(
     },
     profileImage: {
       type: String,
-      default:null
+      default: null,
     },
     refreshToken: {
       type: String,
     },
-    viewedItems:[{
-      type:mongoose.Types.ObjectId,
-      ref:'Product'
-    }],
+    viewedItems: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
     addresses: [addressSchema],
     cart: [cartItemSchema],
     wishlists: [wishlistSchema],
-    myOrders:[{
-      type:mongoose.Types.ObjectId,
-      ref:"Order"
-    }]
+    myOrders: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Order",
+      },
+    ],
   },
   {
     timestamps: true,
-  }
+  },
 );
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
@@ -56,18 +58,19 @@ userSchema.pre("save", async function (next) {
   }
 
   if (this.isNew && (!this.wishlists || this.wishlists.length === 0)) {
-  this.wishlists = [{
-    listName: "Shopping List",
-    isDefault: true,
-    privacy: "Private",
-    email:this.email,
-    items: []
-  }];
-}
+    this.wishlists = [
+      {
+        listName: "Shopping List",
+        isDefault: true,
+        privacy: "Private",
+        email: this.email,
+        items: [],
+      },
+    ];
+  }
 
   next();
 });
-
 
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
@@ -81,7 +84,7 @@ userSchema.methods.generateAccessToken = async function () {
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-    }
+    },
   );
 };
 userSchema.methods.generateRefreshToken = async function () {
@@ -92,7 +95,7 @@ userSchema.methods.generateRefreshToken = async function () {
     process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    }
+    },
   );
 };
 

@@ -13,9 +13,8 @@ exports.verifyPaymentSchema = Joi.object({
       Joi.object({
         productId: Joi.string().length(24).hex().required(),
         quantity: Joi.number().min(1).required(),
-      })
+      }),
     )
     .min(1)
     .required(),
 });
-

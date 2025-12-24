@@ -51,7 +51,7 @@ app.use(hpp());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
   max: 100, // limit each IP to 100 requests
-  message: "Too many requests from this IP, please try again later."
+  message: "Too many requests from this IP, please try again later.",
 });
 app.use("/api", limiter);
 
@@ -69,7 +69,7 @@ app.use(
       return callback(null, true);
     },
     credentials: true,
-  })
+  }),
 );
 
 // ========== Routes ==========
@@ -81,10 +81,9 @@ app.use("/api/v1/user/cart", cartRouter);
 app.use("/api/v1/user/wishlists", wishlistRouter);
 app.use("/api/v1/user/address", addressRouter);
 app.use("/api/v1/seller", sellerRouter);
-app.use("/api/v1/seller/store",storeRouter)
+app.use("/api/v1/seller/store", storeRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/order", orderRouter);
-
 
 app.use(errorHandler);
 

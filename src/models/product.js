@@ -20,9 +20,8 @@ const bankOfferSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
-
 
 const dimensionsSchema = new mongoose.Schema(
   {
@@ -30,9 +29,8 @@ const dimensionsSchema = new mongoose.Schema(
     width: { type: String, required: true },
     thickness: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
-
 
 const productSchema = new mongoose.Schema(
   {
@@ -125,21 +123,19 @@ const productSchema = new mongoose.Schema(
 
     reviews: [reviewSchema],
     stock: { type: Number, required: true },
-    stockSold: { type: Number,required:true,default:0 },
-    isActive:Boolean,
+    stockSold: { type: Number, required: true, default: 0 },
+    isActive: Boolean,
 
     tags: [
       {
         type: String,
         enum: ["LIMITED TIME DEAL", "ARTSTORE PRIME"],
         default: [],
-
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-
 
 productSchema.pre("save", function (next) {
   if (this.isModified("discount") || this.isModified("actualPrice")) {
@@ -155,7 +151,6 @@ productSchema.pre("save", function (next) {
   }
   next();
 });
-
 
 productSchema.methods.updateAverageRating = function () {
   const total = this.reviews.reduce((acc, r) => acc + r.rating, 0);

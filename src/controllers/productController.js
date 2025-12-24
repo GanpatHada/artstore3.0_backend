@@ -27,24 +27,23 @@ const addProduct = asyncHandler(async (req, res) => {
       uploadOnCloudinary(
         file.path,
         `artstore/artworks/${product._id}`,
-        `productImage-${index + 1}`
-      )
-    )
+        `productImage-${index + 1}`,
+      ),
+    ),
   );
 
   product.productImages = uploadedImages;
   await product.save();
-  return res.status(201).json(
-    new ApiResponse(
-      201,
-      { productId: product._id },
-      "Product added successfully!"
-    )
-  );
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        { productId: product._id },
+        "Product added successfully!",
+      ),
+    );
 });
-
-
-
 
 const toggleAvailability = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -64,7 +63,7 @@ const toggleAvailability = asyncHandler(async (req, res) => {
     throw new ApiError(
       403,
       "You are not authorized to modify this product",
-      "FORBIDDEN"
+      "FORBIDDEN",
     );
   }
 
@@ -77,12 +76,10 @@ const toggleAvailability = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { productId: product._id, isActive: product.isActive },
-        `Product availability toggled successfully`
-      )
+        `Product availability toggled successfully`,
+      ),
     );
 });
-
-
 
 const getProducts = asyncHandler(async (req, res) => {
   const { ids: idsQuery, fields } = req.query;
@@ -90,7 +87,7 @@ const getProducts = asyncHandler(async (req, res) => {
   let products;
 
   const selectFields = fields
-    ? fields.split(",").join(" ") 
+    ? fields.split(",").join(" ")
     : "-__v -createdAt -updatedAt";
 
   let query;
@@ -110,26 +107,24 @@ const getProducts = asyncHandler(async (req, res) => {
     query = Product.find().select(selectFields);
   }
 
- if (fields) {
-  if (fields.includes("artist")) {
-    query = query.populate("artist", "_id fullName");
-  }
-  if (fields.includes("reviews")) {
-    query = query.populate({
+  if (fields) {
+    if (fields.includes("artist")) {
+      query = query.populate("artist", "_id fullName");
+    }
+    if (fields.includes("reviews")) {
+      query = query.populate({
+        path: "reviews.user",
+        select: "fullName profileImage",
+        options: { strictPopulate: false },
+      });
+    }
+  } else {
+    query = query.populate("artist", "_id fullName").populate({
       path: "reviews.user",
       select: "fullName profileImage",
-      options: { strictPopulate: false }
+      options: { strictPopulate: false },
     });
   }
-} else {
-  query = query
-    .populate("artist", "_id fullName")
-    .populate({
-      path: "reviews.user",
-      select: "fullName profileImage",
-      options: { strictPopulate: false }
-    });
-}
 
   products = await query.lean();
 
@@ -137,7 +132,6 @@ const getProducts = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, products, "Products fetched successfully"));
 });
-
 
 const getProductDetails = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -166,11 +160,9 @@ const getProductDetails = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, product, "Product details fetched successfully")
+      new ApiResponse(200, product, "Product details fetched successfully"),
     );
 });
-
-
 
 const productReview = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -188,7 +180,7 @@ const productReview = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Product not found", "PRODUCT_NOT_FOUND");
 
   const alreadyReviewed = product.reviews.some(
-    (r) => r.user.toString() === userId.toString()
+    (r) => r.user.toString() === userId.toString(),
   );
 
   if (alreadyReviewed) {
@@ -206,7 +198,7 @@ const productReview = asyncHandler(async (req, res) => {
     .populate("reviews.user", "fullName _id profileImage");
 
   const addedReview = populatedProduct.reviews.find(
-    (r) => r.user._id.toString() === userId.toString()
+    (r) => r.user._id.toString() === userId.toString(),
   );
 
   return res
@@ -224,7 +216,7 @@ const deleteProductReview = asyncHandler(async (req, res) => {
     if (!product) throw new ApiError(404, "Product not found");
 
     const reviewExists = product.reviews.find(
-      (review) => review._id.toString() === reviewId.toString()
+      (review) => review._id.toString() === reviewId.toString(),
     );
     if (!reviewExists) throw new ApiError(404, "Review not found");
 
@@ -232,7 +224,7 @@ const deleteProductReview = asyncHandler(async (req, res) => {
       throw new ApiError(403, "You are not authorized to delete this review");
 
     product.reviews = product.reviews.filter(
-      (review) => review._id.toString() !== reviewId.toString()
+      (review) => review._id.toString() !== reviewId.toString(),
     );
     product.updateAverageRating();
     await product.save();
@@ -260,15 +252,16 @@ const updateProductReview = asyncHandler(async (req, res) => {
     throw new ApiError(
       400,
       "At least one of 'review' or 'rating' must be provided",
-      "INVALID_REVIEW_INPUT"
+      "INVALID_REVIEW_INPUT",
     );
   }
 
   const product = await Product.findById(productId);
-  if (!product) throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
+  if (!product)
+    throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
 
   const existingReview = product.reviews.find(
-    (r) => r._id.toString() === reviewId.toString()
+    (r) => r._id.toString() === reviewId.toString(),
   );
 
   if (!existingReview)
@@ -278,7 +271,7 @@ const updateProductReview = asyncHandler(async (req, res) => {
     throw new ApiError(
       403,
       "You are not authorized to update this review",
-      "FORBIDDEN_REVIEW_UPDATE"
+      "FORBIDDEN_REVIEW_UPDATE",
     );
   }
 
@@ -294,24 +287,23 @@ const updateProductReview = asyncHandler(async (req, res) => {
     .populate("reviews.user", "fullName _id profileImage");
 
   const updatedReview = populatedProduct.reviews.find(
-    (r) => r._id.toString() === reviewId.toString()
+    (r) => r._id.toString() === reviewId.toString(),
   );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      updatedReview,
-      "Review updated successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedReview, "Review updated successfully"));
 });
-
 
 const getSpecialProducts = asyncHandler(async (req, res) => {
   const { type } = req.query;
 
   if (!type) {
-    throw new ApiError(400, "Query parameter 'type' is required", "TYPE_MISSING");
+    throw new ApiError(
+      400,
+      "Query parameter 'type' is required",
+      "TYPE_MISSING",
+    );
   }
 
   const types = type.split(",").map((t) => t.trim());
@@ -319,7 +311,11 @@ const getSpecialProducts = asyncHandler(async (req, res) => {
   const invalidTypes = types.filter((t) => !allowedTypes.includes(t));
 
   if (invalidTypes.length > 0) {
-    throw new ApiError(400, `Invalid type(s): ${invalidTypes.join(", ")}`, "INVALID_TYPE");
+    throw new ApiError(
+      400,
+      `Invalid type(s): ${invalidTypes.join(", ")}`,
+      "INVALID_TYPE",
+    );
   }
 
   const results = {};
@@ -359,10 +355,10 @@ const getSpecialProducts = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, results, "Special products fetched successfully"));
+    .json(
+      new ApiResponse(200, results, "Special products fetched successfully"),
+    );
 });
-
-
 
 const getMyProductReview = asyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -371,13 +367,13 @@ const getMyProductReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(productId);
   if (!product) throw new ApiError(404, "Product not found");
   const userReview = product.reviews.find(
-    (review) => review.user.toString() === userId.toString()
+    (review) => review.user.toString() === userId.toString(),
   );
   if (!userReview)
     throw new ApiError(
       404,
       "You have not reviewed this product",
-      "REVIEW NOT FOUND"
+      "REVIEW NOT FOUND",
     );
   return res
     .status(200)
@@ -402,7 +398,7 @@ const editProduct = asyncHandler(async (req, res) => {
     throw new ApiError(
       403,
       "You are not authorized to modify this product",
-      "FORBIDDEN"
+      "FORBIDDEN",
     );
   }
 
@@ -413,9 +409,9 @@ const editProduct = asyncHandler(async (req, res) => {
         uploadOnCloudinary(
           file.path,
           `artstore/artworks/${productId}`,
-          `productImage-${index + 1}`
-        )
-      )
+          `productImage-${index + 1}`,
+        ),
+      ),
     );
 
     req.body.productImages = uploadedImages;
@@ -428,19 +424,14 @@ const editProduct = asyncHandler(async (req, res) => {
       actualPrice: req.body.price ?? product.actualPrice,
       discount: req.body.discount ?? product.discount,
     },
-    { runValidators: true }
+    { runValidators: true },
   );
 
   // ✅ Only send productId
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { productId },
-      "Product updated successfully!"
-    )
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { productId }, "Product updated successfully!"));
 });
-
 
 module.exports = {
   addProduct,
@@ -452,5 +443,5 @@ module.exports = {
   deleteProductReview,
   updateProductReview,
   getMyProductReview,
-  editProduct
+  editProduct,
 };

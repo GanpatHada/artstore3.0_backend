@@ -6,7 +6,7 @@ const reviewSchema = new mongoose.Schema(
     rating: Number,
     review: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-module.exports=reviewSchema
+module.exports = reviewSchema;

@@ -1,11 +1,12 @@
 <div align="center">
 
 # 🖼️ Backend of Artstore | E-commerce Application for Art Enthusiasts
+
 ---
 
 </div>
 
-## 🔥  Overview
+## 🔥 Overview
 
 This repository contains the complete backend source code for Artstore, a full-featured e-commerce platform designed for buying and selling art. Built with Node.js and Express, it provides a robust RESTful API to support all application functionalities, from user authentication and product management to order processing and payments.
 
@@ -32,6 +33,3 @@ This repository contains the complete backend source code for Artstore, a full-f
 - **API & Validation:** A well-structured RESTful API with rigorous data validation using the **Joi** library to ensure data integrity.
 
 - **Error Handling:** Employs a centralized error handling middleware for consistent and predictable API responses across the application.
-
-
-

@@ -2,38 +2,75 @@ const Product = require("../models/product");
 const Seller = require("../models/seller");
 const ApiResponse = require("../utils/ApiResponse");
 const asyncHandler = require("../utils/asynchandler");
-
+const uploadOnCloudinary = require("../utils/cloudinary");
 
 // ================= Seller details ======================
 
-
 const sellerDetails = asyncHandler(async (req, res) => {
-    const seller = await Seller.findById(req.seller._id).select("-password -refreshToken -createdAt -updatedAt -__v");
-    return res
-      .status(200)
-      .json(new ApiResponse(200, seller, "seller details found"));
-    
-  
+  const seller = await Seller.findById(req.seller._id).select(
+    "-password -refreshToken -createdAt -updatedAt -__v",
+  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, seller, "seller details found"));
 });
 
+//================== Update seller details ====================
+
+const updateSeller = asyncHandler(async (req, res) => {
+  const { fullName, profileImage } = req.body;
+  const filePath = req.file?.path;
+  const seller = req.seller;
+
+  if (fullName !== undefined) {
+    seller.fullName = fullName;
+  }
+
+  if (filePath) {
+    const profileImageUrl = await uploadOnCloudinary(
+      filePath,
+      `artstore/sellers/${seller._id}`,
+      "profileImage",
+    );
+
+    if (!profileImageUrl) {
+      throw new ApiError(500, "Image upload failed");
+    }
+
+    seller.profileImage = profileImageUrl;
+  }
+
+  if (profileImage === "null") {
+    seller.profileImage = null;
+  }
+
+  await seller.save();
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        profileImage: seller.profileImage,
+        fullName: seller.fullName,
+      },
+      "Seller profile updated successfully",
+    ),
+  );
+});
 
 // ================= Get seller products ======================
 
-
 const getSellerProducts = asyncHandler(async (req, res) => {
-    const seller = req.seller;
-    const products = await Product.find({ artist: seller._id })
-    .select("isActive title productImages createdAt stockSold stock price actualPrice discount surface medium");
-    return res
-      .status(200)
-      .json(new ApiResponse(200, products, "seller products found"));
+  const seller = req.seller;
+  const products = await Product.find({ artist: seller._id }).select(
+    "isActive title productImages createdAt stockSold stock price actualPrice discount surface medium",
+  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, products, "seller products found"));
 });
 
-
 // ================= Get seller products stats ======================
-
-
-
 
 const getSellerProductStats = asyncHandler(async (req, res) => {
   const sellerId = req.seller._id;
@@ -73,14 +110,14 @@ const getSellerProductStats = asyncHandler(async (req, res) => {
         availableProducts,
         unavailableProducts,
       },
-      "Seller product stats fetched successfully"
-    )
+      "Seller product stats fetched successfully",
+    ),
   );
 });
 
-
-
-
-
-
-module.exports = { sellerDetails, getSellerProducts,getSellerProductStats };
+module.exports = {
+  sellerDetails,
+  updateSeller,
+  getSellerProducts,
+  getSellerProductStats,
+};

@@ -5,11 +5,11 @@ const loginValidation = Joi.object({
     .required()
     .custom((value, helpers) => {
       const isEmail = Joi.string().email().validate(value).error === undefined;
-      const isPhone = /^\d{10}$/.test(value); 
+      const isPhone = /^\d{10}$/.test(value);
 
       if (!isEmail && !isPhone) {
         return helpers.message(
-          "Must be a valid email or 10-digit phone number"
+          "Must be a valid email or 10-digit phone number",
         );
       }
 
@@ -53,4 +53,4 @@ const signupValidation = Joi.object({
     }),
 });
 
-module.exports={loginValidation,signupValidation}
+module.exports = { loginValidation, signupValidation };
