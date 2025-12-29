@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const reviewSchema = require("./review");
+const mongoose = require('mongoose');
+const reviewSchema = require('./review');
 
 const bankOfferSchema = new mongoose.Schema(
   {
@@ -64,24 +64,24 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        "MADHUBANI",
-        "PHAD",
-        "WARLI",
-        "MINIATURE",
-        "PITHORA",
-        "GOND",
-        "PATTACHITRA",
-        "MUGHAL",
-        "TANJORE",
-        "KERALA MURAL",
-        "KALIGHAT",
-        "OTHERS",
+        'MADHUBANI',
+        'PHAD',
+        'WARLI',
+        'MINIATURE',
+        'PITHORA',
+        'GOND',
+        'PATTACHITRA',
+        'MUGHAL',
+        'TANJORE',
+        'KERALA MURAL',
+        'KALIGHAT',
+        'OTHERS',
       ],
     },
 
     artist: {
       type: mongoose.Types.ObjectId,
-      ref: "Seller",
+      ref: 'Seller',
       required: true,
     },
 
@@ -129,7 +129,7 @@ const productSchema = new mongoose.Schema(
     tags: [
       {
         type: String,
-        enum: ["LIMITED TIME DEAL", "ARTSTORE PRIME"],
+        enum: ['LIMITED TIME DEAL', 'ARTSTORE PRIME'],
         default: [],
       },
     ],
@@ -137,16 +137,16 @@ const productSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-productSchema.pre("save", function (next) {
-  if (this.isModified("discount") || this.isModified("actualPrice")) {
+productSchema.pre('save', function (next) {
+  if (this.isModified('discount') || this.isModified('actualPrice')) {
     const discountAmount = Math.floor((this.discount / 100) * this.actualPrice);
     this.price = Math.floor(this.actualPrice - discountAmount);
   }
   next();
 });
 
-productSchema.pre("save", function (next) {
-  if (this.isModified("stock")) {
+productSchema.pre('save', function (next) {
+  if (this.isModified('stock')) {
     this.isActive = true;
   }
   next();
@@ -160,5 +160,5 @@ productSchema.methods.updateAverageRating = function () {
       : parseFloat((total / this.reviews.length).toFixed(1));
 };
 
-const Product = mongoose.model("Product", productSchema);
+const Product = mongoose.model('Product', productSchema);
 module.exports = Product;

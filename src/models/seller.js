@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const sellerSchema = new mongoose.Schema(
   {
     fullName: {
@@ -41,8 +41,8 @@ const sellerSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-sellerSchema.pre("save", async function (next) {
-  if (this.isModified("password"))
+sellerSchema.pre('save', async function (next) {
+  if (this.isModified('password'))
     this.password = await bcrypt.hash(this.password, 10);
   next();
 });
@@ -74,5 +74,5 @@ sellerSchema.methods.generateRefreshToken = async function () {
   );
 };
 
-const Seller = mongoose.model("Seller", sellerSchema);
+const Seller = mongoose.model('Seller', sellerSchema);
 module.exports = Seller;

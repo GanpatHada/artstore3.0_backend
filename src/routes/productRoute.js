@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const {
   addProduct,
@@ -11,41 +11,41 @@ const {
   toggleAvailability,
   getSpecialProducts,
   editProduct,
-} = require("../controllers/productController.js");
-const upload = require("../middlewares/multer.js");
-const { verifyUserJwt, verifySellerJwt } = require("../middlewares/auth.js");
-const validateRequest = require("../middlewares/validateRequest.js");
-const { productValidation } = require("../validations/productValidation.js");
+} = require('../controllers/productController.js');
+const upload = require('../middlewares/multer.js');
+const { verifyUserJwt, verifySellerJwt } = require('../middlewares/auth.js');
+const validateRequest = require('../middlewares/validateRequest.js');
+const { productValidation } = require('../validations/productValidation.js');
 
-router.route("/").get(getProducts);
-router.route("/special").get(getSpecialProducts);
+router.route('/').get(getProducts);
+router.route('/special').get(getSpecialProducts);
 router
-  .route("/")
+  .route('/')
   .post(
-    upload.array("productImages"),
+    upload.array('productImages'),
     validateRequest(productValidation),
     verifySellerJwt,
     addProduct,
   );
 router
-  .route("/edit/:productId")
+  .route('/edit/:productId')
   .put(
-    upload.array("productImages"),
+    upload.array('productImages'),
     validateRequest(productValidation),
     verifySellerJwt,
     editProduct,
   );
 router
-  .route("/:productId/toggle-availability")
+  .route('/:productId/toggle-availability')
   .patch(verifySellerJwt, toggleAvailability);
-router.route("/:productId").get(getProductDetails);
-router.route("/:productId/reviews").post(verifyUserJwt, productReview);
-router.route("/:productId/reviews").get(verifyUserJwt, getMyProductReview);
+router.route('/:productId').get(getProductDetails);
+router.route('/:productId/reviews').post(verifyUserJwt, productReview);
+router.route('/:productId/reviews').get(verifyUserJwt, getMyProductReview);
 router
-  .route("/:productId/reviews/:reviewId")
+  .route('/:productId/reviews/:reviewId')
   .delete(verifyUserJwt, deleteProductReview);
 router
-  .route("/:productId/reviews/:reviewId")
+  .route('/:productId/reviews/:reviewId')
   .patch(verifyUserJwt, updateProductReview);
 
 module.exports = router;

@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "prettier": "prettier --write ."
+  },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.1",

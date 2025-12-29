@@ -1,4 +1,4 @@
-const Joi = require("joi");
+const Joi = require('joi');
 
 const storeValidation = Joi.object({
   businessName: Joi.string().min(3).max(100).required(),
@@ -17,7 +17,7 @@ const storeValidation = Joi.object({
   city: Joi.string().required(),
   state: Joi.string().required(),
   postalCode: Joi.string().required(),
-  country: Joi.string().default("India"),
+  country: Joi.string().default('India'),
 
   // Bank
   accountHolderName: Joi.string().required(),
@@ -38,19 +38,19 @@ const storeValidation = Joi.object({
     .try(
       Joi.string().length(15), // if provided → validate
       Joi.valid(null), // explicit null
-      Joi.valid("null"), // FormData "null"
+      Joi.valid('null'), // FormData "null"
     )
     .optional(),
 
   businessType: Joi.string()
     .valid(
-      "Individual",
-      "Proprietorship",
-      "Partnership",
-      "LLP",
-      "Private Limited",
+      'Individual',
+      'Proprietorship',
+      'Partnership',
+      'LLP',
+      'Private Limited',
     )
-    .default("Individual"),
+    .default('Individual'),
 }).unknown(false);
 
 module.exports = { storeValidation };

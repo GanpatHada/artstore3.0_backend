@@ -1,23 +1,23 @@
-const { customAlphabet } = require("nanoid");
-const ApiError = require("../utils/ApiError");
-const asyncHandler = require("../utils/asynchandler");
-const razorpay = require("../config/rzp.config");
-const ApiResponse = require("../utils/ApiResponse");
-const { alphaNumber } = require("../Constants");
-const { verifySignature } = require("../helpers/order.helper");
-const Order = require("../models/order");
-const Product = require("../models/product");
+const { customAlphabet } = require('nanoid');
+const ApiError = require('../utils/ApiError');
+const asyncHandler = require('../utils/asynchandler');
+const razorpay = require('../config/rzp.config');
+const ApiResponse = require('../utils/ApiResponse');
+const { alphaNumber } = require('../Constants');
+const { verifySignature } = require('../helpers/order.helper');
+const Order = require('../models/order');
+const Product = require('../models/product');
 
 //==================@create order before payment================================
 
 const createOrder = asyncHandler(async (req, res) => {
   const { amount } = req.body;
-  if (!amount) throw new ApiError(400, "Amount not given", "AMOUNT_MISSING");
+  if (!amount) throw new ApiError(400, 'Amount not given', 'AMOUNT_MISSING');
 
   const getUniqueReceiptNo = customAlphabet(alphaNumber, 12);
   const options = {
     amount: amount * 100,
-    currency: "INR",
+    currency: 'INR',
     receipt: `RECNO${getUniqueReceiptNo()}`,
     notes: {
       createdBy: req.user._id.toString(),
@@ -29,10 +29,10 @@ const createOrder = asyncHandler(async (req, res) => {
     const order = await razorpay.orders.create(options);
     return res
       .status(201)
-      .json(new ApiResponse(201, order, "Order created successfully"));
+      .json(new ApiResponse(201, order, 'Order created successfully'));
   } catch (error) {
-    console.error("Razorpay order creation failed:", error);
-    throw new ApiError(500, "Payment gateway not working", "RAZORPAY_FAILURE");
+    console.error('Razorpay order creation failed:', error);
+    throw new ApiError(500, 'Payment gateway not working', 'RAZORPAY_FAILURE');
   }
 });
 
@@ -44,11 +44,11 @@ const mapOrderedItems = async (productsList) => {
   for (const item of productsList) {
     const product = await Product.findById(item.productId);
     if (!product)
-      throw new ApiError(404, "Product not found", "PRODUCT_NOT_FOUND");
+      throw new ApiError(404, 'Product not found', 'PRODUCT_NOT_FOUND');
     if (!product.isActive)
-      throw new ApiError(404, "Product not available", "PRODUCT_NOT_AVAILABLE");
+      throw new ApiError(404, 'Product not available', 'PRODUCT_NOT_AVAILABLE');
     if (product.stock < item.quantity)
-      throw new ApiError(404, "Stock is not enough", "STOCK_NOT_ENOUGH");
+      throw new ApiError(404, 'Stock is not enough', 'STOCK_NOT_ENOUGH');
 
     orderedItems.push({
       product: product._id,
@@ -67,7 +67,7 @@ const getAddressDetails = (user, addressId) => {
     (address) => address._id.toString() === addressId.toString(),
   );
   if (!address)
-    throw new ApiError(404, "Address not found", "ADDRESS_NOT_FOUND");
+    throw new ApiError(404, 'Address not found', 'ADDRESS_NOT_FOUND');
 
   return {
     fullName: address.receiverName,
@@ -104,8 +104,8 @@ const verifyPayment = asyncHandler(async (req, res) => {
   if (!signatureVerified)
     throw new ApiError(
       400,
-      "Invalid payment credential",
-      "SIGNATURE_MISSMATCH",
+      'Invalid payment credential',
+      'SIGNATURE_MISSMATCH',
     );
 
   const orderedItems = await mapOrderedItems(products);
@@ -123,8 +123,8 @@ const verifyPayment = asyncHandler(async (req, res) => {
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
       signature: razorpay_signature,
-      method: "Razorpay",
-      status: "Paid",
+      method: 'Razorpay',
+      status: 'Paid',
     },
   });
 
@@ -166,19 +166,20 @@ const verifyPayment = asyncHandler(async (req, res) => {
         updatedCart: user.cart,
         updatedMyOrders: user.myOrders,
       },
-      "Payment is done and order is placed successfully",
+      'Payment is done and order is placed successfully',
     ),
   );
 });
 
 const getOrderDetails = asyncHandler(async (req, res) => {
   const orderId = req.params.orderId;
-  if (!orderId) throw new ApiError(400, "Orderid not given");
+  if (!orderId)
+    throw new ApiError(400, 'Orderid not given', 'ORDER_ID_MISSING');
   const order = await Order.findById(orderId);
-  if (!order) throw new ApiError(400, "Order not found");
+  if (!order) throw new ApiError(400, 'Order not found', 'ORDER_NOT_FOUND');
   return res
     .status(200)
-    .json(new ApiResponse(200, order, "order fetched successfully"));
+    .json(new ApiResponse(200, order, 'order fetched successfully'));
 });
 
 module.exports = { createOrder, verifyPayment, getOrderDetails };

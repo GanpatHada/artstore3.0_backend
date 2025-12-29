@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
-const { addressSchema } = require("./address");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { cartItemSchema } = require("./cart");
-const { wishlistSchema } = require("./wishlist");
+const mongoose = require('mongoose');
+const { addressSchema } = require('./address');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { cartItemSchema } = require('./cart');
+const { wishlistSchema } = require('./wishlist');
 
 const userSchema = new mongoose.Schema(
   {
@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     viewedItems: [
       {
         type: mongoose.Types.ObjectId,
-        ref: "Product",
+        ref: 'Product',
       },
     ],
     addresses: [addressSchema],
@@ -44,7 +44,7 @@ const userSchema = new mongoose.Schema(
     myOrders: [
       {
         type: mongoose.Types.ObjectId,
-        ref: "Order",
+        ref: 'Order',
       },
     ],
   },
@@ -52,17 +52,17 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-userSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, 10);
   }
 
   if (this.isNew && (!this.wishlists || this.wishlists.length === 0)) {
     this.wishlists = [
       {
-        listName: "Shopping List",
+        listName: 'Shopping List',
         isDefault: true,
-        privacy: "Private",
+        privacy: 'Private',
         email: this.email,
         items: [],
       },
@@ -99,5 +99,5 @@ userSchema.methods.generateRefreshToken = async function () {
   );
 };
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 module.exports = User;

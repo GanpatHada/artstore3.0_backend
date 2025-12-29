@@ -1,10 +1,10 @@
-const { cookieOptions } = require("../helpers/auth.helpers");
-const Seller = require("../models/seller");
-const User = require("../models/user");
-const ApiError = require("../utils/ApiError");
-const ApiResponse = require("../utils/ApiResponse");
-const asyncHandler = require("../utils/asynchandler");
-const jwt = require("jsonwebtoken");
+const { cookieOptions } = require('../helpers/auth.helpers');
+const Seller = require('../models/seller');
+const User = require('../models/user');
+const ApiError = require('../utils/ApiError');
+const ApiResponse = require('../utils/ApiResponse');
+const asyncHandler = require('../utils/asynchandler');
+const jwt = require('jsonwebtoken');
 
 const models = { user: User, seller: Seller };
 
@@ -18,7 +18,7 @@ const signup = asyncHandler(async (req, res) => {
     throw new ApiError(
       400,
       "Invalid mode, must be 'user' or 'seller'",
-      "INVALID_MODE",
+      'INVALID_MODE',
     );
   }
 
@@ -28,7 +28,7 @@ const signup = asyncHandler(async (req, res) => {
     throw new ApiError(
       409,
       `${mode} with this email already exists`,
-      "EMAIL_ALREADY_EXISTS",
+      'EMAIL_ALREADY_EXISTS',
     );
   }
 
@@ -38,7 +38,7 @@ const signup = asyncHandler(async (req, res) => {
     throw new ApiError(
       409,
       `${mode} with this phone already exists`,
-      "PHONE_ALREADY_EXISTS",
+      'PHONE_ALREADY_EXISTS',
     );
   }
 
@@ -71,7 +71,7 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(
       400,
       "Invalid mode, must be 'user' or 'seller'",
-      "INVALID_MODE",
+      'INVALID_MODE',
     );
   }
 
@@ -83,8 +83,8 @@ const login = asyncHandler(async (req, res) => {
   if (!account) {
     throw new ApiError(
       404,
-      "Account not found with this email or phone",
-      "ACCOUNT_NOT_FOUND",
+      'Account not found with this email or phone',
+      'ACCOUNT_NOT_FOUND',
     );
   }
 
@@ -93,8 +93,8 @@ const login = asyncHandler(async (req, res) => {
   if (!validPassword) {
     throw new ApiError(
       401,
-      "Incorrect password, please try again",
-      "INVALID_PASSWORD",
+      'Incorrect password, please try again',
+      'INVALID_PASSWORD',
     );
   }
 
@@ -113,7 +113,7 @@ const login = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie('refreshToken', refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
@@ -133,7 +133,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   const oldRefreshToken = req.cookies.refreshToken;
 
   if (!oldRefreshToken) {
-    throw new ApiError(401, "Unauthorized request", "MISSED_REFRESH_TOKEN");
+    throw new ApiError(401, 'Unauthorized request', 'MISSED_REFRESH_TOKEN');
   }
 
   // Verify refresh token
@@ -144,34 +144,34 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
     );
   } catch (error) {
-    const isExpired = error.name === "TokenExpiredError";
+    const isExpired = error.name === 'TokenExpiredError';
     throw new ApiError(
       401,
-      isExpired ? "Refresh token expired" : "Invalid refresh token",
-      isExpired ? "EXPIRED_REFRESH_TOKEN" : "INVALID_REFRESH_TOKEN",
+      isExpired ? 'Refresh token expired' : 'Invalid refresh token',
+      isExpired ? 'EXPIRED_REFRESH_TOKEN' : 'INVALID_REFRESH_TOKEN',
     );
   }
 
   let account;
 
   switch (mode) {
-    case "user":
+    case 'user':
       account = await User.findById(decodedToken._id);
-      if (!account) throw new ApiError(401, "User not found", "USER_NOT_FOUND");
+      if (!account) throw new ApiError(401, 'User not found', 'USER_NOT_FOUND');
       break;
 
-    case "seller":
+    case 'seller':
       account = await Seller.findById(decodedToken._id);
       if (!account)
-        throw new ApiError(401, "Seller not found", "SELLER_NOT_FOUND");
+        throw new ApiError(401, 'Seller not found', 'SELLER_NOT_FOUND');
       break;
 
     default:
-      throw new ApiError(400, "Invalid mode", "INVALID_MODE");
+      throw new ApiError(400, 'Invalid mode', 'INVALID_MODE');
   }
 
   if (oldRefreshToken !== account.refreshToken) {
-    throw new ApiError(401, "Refresh token mismatch", "INVALID_REFRESH_TOKEN");
+    throw new ApiError(401, 'Refresh token mismatch', 'INVALID_REFRESH_TOKEN');
   }
 
   const accessToken = await account.generateAccessToken();
@@ -182,8 +182,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("refreshToken", newRefreshToken, cookieOptions)
-    .json(new ApiResponse(200, accessToken, "Access token refreshed"));
+    .cookie('refreshToken', newRefreshToken, cookieOptions)
+    .json(new ApiResponse(200, accessToken, 'Access token refreshed'));
 });
 
 module.exports = { signup, login, refreshAccessToken };

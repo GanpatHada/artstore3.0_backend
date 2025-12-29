@@ -1,22 +1,22 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const wishlistItemSchema = new mongoose.Schema(
   {
     product: {
       type: mongoose.Types.ObjectId,
-      ref: "Product",
+      ref: 'Product',
       required: true,
     },
     note: {
       type: {
         comment: {
           type: String,
-          default: "",
+          default: '',
         },
         priority: {
           type: String,
-          enum: ["Low", "Medium", "High"],
-          default: "Medium",
+          enum: ['Low', 'Medium', 'High'],
+          default: 'Medium',
         },
       },
       default: null,
@@ -33,8 +33,8 @@ const wishlistSchema = new mongoose.Schema({
   },
   privacy: {
     type: String,
-    enum: ["Private", "Public", "Shared"],
-    default: "Private",
+    enum: ['Private', 'Public', 'Shared'],
+    default: 'Private',
   },
   isDefault: {
     type: Boolean,
@@ -42,7 +42,7 @@ const wishlistSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    default: "",
+    default: '',
     trim: true,
   },
   items: [wishlistItemSchema],

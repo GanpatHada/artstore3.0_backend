@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const storeSchema = new mongoose.Schema({
   seller: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Seller",
+    ref: 'Seller',
     required: true,
     unique: true,
   },
@@ -43,7 +43,7 @@ const storeSchema = new mongoose.Schema({
     city: { type: String, required: true },
     state: { type: String, required: true },
     postalCode: { type: String, required: true },
-    country: { type: String, default: "India" },
+    country: { type: String, default: 'India' },
   },
 
   bankDetails: {
@@ -82,13 +82,13 @@ const storeSchema = new mongoose.Schema({
   businessType: {
     type: String,
     enum: [
-      "Individual",
-      "Proprietorship",
-      "Partnership",
-      "LLP",
-      "Private Limited",
+      'Individual',
+      'Proprietorship',
+      'Partnership',
+      'LLP',
+      'Private Limited',
     ],
-    default: "Individual",
+    default: 'Individual',
   },
 
   isVerified: {
@@ -102,19 +102,19 @@ const storeSchema = new mongoose.Schema({
   },
 });
 
-storeSchema.set("toJSON", {
+storeSchema.set('toJSON', {
   transform: function (doc, ret) {
     delete ret.__v;
     return ret;
   },
 });
 
-storeSchema.set("toObject", {
+storeSchema.set('toObject', {
   transform: function (doc, ret) {
     delete ret.__v;
     return ret;
   },
 });
 
-const Store = mongoose.model("Store", storeSchema);
+const Store = mongoose.model('Store', storeSchema);
 module.exports = Store;

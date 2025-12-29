@@ -1,12 +1,12 @@
-const ApiError = require("../utils/ApiError");
-const ApiResponse = require("../utils/ApiResponse");
-const asyncHandler = require("../utils/asynchandler");
+const ApiError = require('../utils/ApiError');
+const ApiResponse = require('../utils/ApiResponse');
+const asyncHandler = require('../utils/asynchandler');
 
 const addAddress = asyncHandler(async (req, res) => {
   const user = req.user;
 
   const newAddress = Object.assign({}, req.body, {
-    landmark: req.body.landmark || "",
+    landmark: req.body.landmark || '',
   });
 
   user.addresses.push(newAddress);
@@ -16,14 +16,14 @@ const addAddress = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(201, recentAddressObj, "Address added successfully"));
+    .json(new ApiResponse(201, recentAddressObj, 'Address added successfully'));
 });
 
 const deleteAddress = asyncHandler(async (req, res) => {
   const { addressId } = req.params;
 
   if (!addressId) {
-    throw new ApiError(400, "Address ID not provided", "MISSING_ADDRESS_ID");
+    throw new ApiError(400, 'Address ID not provided', 'MISSING_ADDRESS_ID');
   }
 
   const user = req.user;
@@ -35,21 +35,21 @@ const deleteAddress = asyncHandler(async (req, res) => {
   );
 
   if (user.addresses.length === initialLength) {
-    throw new ApiError(404, "Address not found", "ADDRESS_NOT_FOUND");
+    throw new ApiError(404, 'Address not found', 'ADDRESS_NOT_FOUND');
   }
 
   await user.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, addressId, "Address deleted successfully"));
+    .json(new ApiResponse(200, addressId, 'Address deleted successfully'));
 });
 
 const makePrimaryAddress = asyncHandler(async (req, res) => {
   const { addressId } = req.params;
 
   if (!addressId) {
-    throw new ApiError(400, "Address ID not provided", "MISSING_ADDRESS_ID");
+    throw new ApiError(400, 'Address ID not provided', 'MISSING_ADDRESS_ID');
   }
 
   const user = req.user;
@@ -59,7 +59,7 @@ const makePrimaryAddress = asyncHandler(async (req, res) => {
   );
 
   if (!primaryAddress) {
-    throw new ApiError(404, "Address not found", "ADDRESS_NOT_FOUND");
+    throw new ApiError(404, 'Address not found', 'ADDRESS_NOT_FOUND');
   }
 
   const otherAddresses = user.addresses.filter(
@@ -72,7 +72,7 @@ const makePrimaryAddress = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, addressId, "Address has been marked as primary"),
+      new ApiResponse(200, addressId, 'Address has been marked as primary'),
     );
 });
 
@@ -81,24 +81,24 @@ const editAddress = asyncHandler(async (req, res) => {
   const user = req.user;
 
   if (!addressId) {
-    throw new ApiError(400, "Address ID not provided", "ADDRESS_ID_MISSING");
+    throw new ApiError(400, 'Address ID not provided', 'ADDRESS_ID_MISSING');
   }
 
   const address = user.addresses.id(addressId);
   if (!address) {
-    throw new ApiError(404, "Address not found", "ADDRESS_NOT_FOUND");
+    throw new ApiError(404, 'Address not found', 'ADDRESS_NOT_FOUND');
   }
 
   Object.assign(address, {
     ...req.body,
-    landmark: req.body.landmark || "",
+    landmark: req.body.landmark || '',
   });
 
   await user.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, address, "Address updated successfully"));
+    .json(new ApiResponse(200, address, 'Address updated successfully'));
 });
 
 module.exports = { addAddress, deleteAddress, makePrimaryAddress, editAddress };

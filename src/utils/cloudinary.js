@@ -1,5 +1,5 @@
-const { v2: cloudinary } = require("cloudinary");
-const fs = require("fs");
+const { v2: cloudinary } = require('cloudinary');
+const fs = require('fs');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -15,11 +15,11 @@ async function uploadOnCloudinary(localFilePath, folderPath, publicId) {
       folder: folderPath,
       public_id: publicId,
       overwrite: true,
-      resource_type: "auto",
+      resource_type: 'auto',
     });
     return uploadResult.secure_url;
   } catch (error) {
-    console.error("Cloudinary upload failed:", error);
+    console.error('Cloudinary upload failed:', error);
     return null;
   } finally {
     if (fs.existsSync(localFilePath)) {

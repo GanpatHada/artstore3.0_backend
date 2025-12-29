@@ -1,4 +1,4 @@
-const ApiError = require("../utils/ApiError");
+const ApiError = require('../utils/ApiError');
 
 const validateRequest = (schema) => (req, _, next) => {
   const { error, value } = schema.validate(req.body, {
@@ -7,7 +7,7 @@ const validateRequest = (schema) => (req, _, next) => {
   });
 
   if (error) {
-    throw new ApiError(400, error.details[0].message, "VALIDATION_FAILED");
+    throw new ApiError(400, error.details[0].message, 'VALIDATION_FAILED');
   }
 
   req.body = value;

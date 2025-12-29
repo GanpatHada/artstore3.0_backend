@@ -1,4 +1,4 @@
-const Joi = require("joi");
+const Joi = require('joi');
 
 exports.verifyPaymentSchema = Joi.object({
   razorpay_order_id: Joi.string().required(),

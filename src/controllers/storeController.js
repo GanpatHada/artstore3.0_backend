@@ -1,15 +1,15 @@
-const Store = require("../models/store");
-const ApiError = require("../utils/ApiError");
-const ApiResponse = require("../utils/ApiResponse");
-const asyncHandler = require("../utils/asynchandler");
-const uploadOnCloudinary = require("../utils/cloudinary");
+const Store = require('../models/store');
+const ApiError = require('../utils/ApiError');
+const ApiResponse = require('../utils/ApiResponse');
+const asyncHandler = require('../utils/asynchandler');
+const uploadOnCloudinary = require('../utils/cloudinary');
 
 // ================= Create Store ======================
 
 const createStore = asyncHandler(async (req, res) => {
   const existingStore = await Store.findOne({ seller: req.seller._id });
   if (existingStore) {
-    throw new ApiError(400, "Store already created", "DUPLICATE_STORE");
+    throw new ApiError(400, 'Store already created', 'DUPLICATE_STORE');
   }
 
   const {
@@ -33,7 +33,7 @@ const createStore = asyncHandler(async (req, res) => {
       city,
       state,
       postalCode,
-      country: country ?? "India",
+      country: country ?? 'India',
     },
     bankDetails: {
       accountHolderName,
@@ -50,21 +50,22 @@ const createStore = asyncHandler(async (req, res) => {
     const businessLogoUrl = await uploadOnCloudinary(
       req.file.path,
       `artstore/store/${store._id}`,
-      "businessLogo",
+      'businessLogo',
     );
-    if (!businessLogoUrl) throw new ApiError(500, "Image upload failed");
+    if (!businessLogoUrl)
+      throw new ApiError(500, 'Image upload failed', 'IMAGE_UPLOAD_FAILED');
     store.businessLogo = businessLogoUrl;
     await store.save();
   }
 
   return res
     .status(201)
-    .json(new ApiResponse(201, store, "Store created successfully"));
+    .json(new ApiResponse(201, store, 'Store created successfully'));
 });
 
 const updateStore = asyncHandler(async (req, res) => {
   const store = await Store.findOne({ seller: req.seller._id });
-  if (!store) throw new ApiError(404, "Store not found", "STORE_NOT_FOUND");
+  if (!store) throw new ApiError(404, 'Store not found', 'STORE_NOT_FOUND');
 
   const {
     street,
@@ -99,11 +100,12 @@ const updateStore = asyncHandler(async (req, res) => {
     const businessLogoUrl = await uploadOnCloudinary(
       req.file.path,
       `artstore/store/${store._id}`,
-      "businessLogo",
+      'businessLogo',
     );
-    if (!businessLogoUrl) throw new ApiError(500, "Image upload failed");
+    if (!businessLogoUrl)
+      throw new ApiError(500, 'Image upload failed', 'IMAGE_UPLOAD_FAILED');
     store.businessLogo = businessLogoUrl;
-  } else if (!("businessLogo" in req.body)) {
+  } else if (!('businessLogo' in req.body)) {
     store.businessLogo = null;
   }
 
@@ -111,26 +113,26 @@ const updateStore = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, store, "Store updated successfully"));
+    .json(new ApiResponse(200, store, 'Store updated successfully'));
 });
 
 // ================= Get Store ======================
 
 const getStoreDetails = asyncHandler(async (req, res) => {
   const existingStore = await Store.findOne({ seller: req.seller._id })
-    .select("-__v")
+    .select('-__v')
     .lean();
 
   if (!existingStore) {
     return res
       .status(200)
-      .json(new ApiResponse(200, null, "Store has not been created yet"));
+      .json(new ApiResponse(200, null, 'Store has not been created yet'));
   }
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, existingStore, "Store details fetched successfully"),
+      new ApiResponse(200, existingStore, 'Store details fetched successfully'),
     );
 });
 

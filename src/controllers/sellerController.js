@@ -1,18 +1,19 @@
-const Product = require("../models/product");
-const Seller = require("../models/seller");
-const ApiResponse = require("../utils/ApiResponse");
-const asyncHandler = require("../utils/asynchandler");
-const uploadOnCloudinary = require("../utils/cloudinary");
+const { cookieOptions } = require('../helpers/auth.helpers');
+const Product = require('../models/product');
+const Seller = require('../models/seller');
+const ApiResponse = require('../utils/ApiResponse');
+const asyncHandler = require('../utils/asynchandler');
+const uploadOnCloudinary = require('../utils/cloudinary');
 
 // ================= Seller details ======================
 
 const sellerDetails = asyncHandler(async (req, res) => {
   const seller = await Seller.findById(req.seller._id).select(
-    "-password -refreshToken -createdAt -updatedAt -__v",
+    '-password -refreshToken -createdAt -updatedAt -__v',
   );
   return res
     .status(200)
-    .json(new ApiResponse(200, seller, "seller details found"));
+    .json(new ApiResponse(200, seller, 'seller details found'));
 });
 
 //================== Update seller details ====================
@@ -30,17 +31,17 @@ const updateSeller = asyncHandler(async (req, res) => {
     const profileImageUrl = await uploadOnCloudinary(
       filePath,
       `artstore/sellers/${seller._id}`,
-      "profileImage",
+      'profileImage',
     );
 
     if (!profileImageUrl) {
-      throw new ApiError(500, "Image upload failed");
+      throw new ApiError(500, 'Image upload failed', 'IMAGE_UPLOAD_FAILED');
     }
 
     seller.profileImage = profileImageUrl;
   }
 
-  if (profileImage === "null") {
+  if (profileImage === 'null') {
     seller.profileImage = null;
   }
 
@@ -53,7 +54,7 @@ const updateSeller = asyncHandler(async (req, res) => {
         profileImage: seller.profileImage,
         fullName: seller.fullName,
       },
-      "Seller profile updated successfully",
+      'Seller profile updated successfully',
     ),
   );
 });
@@ -63,11 +64,11 @@ const updateSeller = asyncHandler(async (req, res) => {
 const getSellerProducts = asyncHandler(async (req, res) => {
   const seller = req.seller;
   const products = await Product.find({ artist: seller._id }).select(
-    "isActive title productImages createdAt stockSold stock price actualPrice discount surface medium",
+    'isActive title productImages createdAt stockSold stock price actualPrice discount surface medium',
   );
   return res
     .status(200)
-    .json(new ApiResponse(200, products, "seller products found"));
+    .json(new ApiResponse(200, products, 'seller products found'));
 });
 
 // ================= Get seller products stats ======================
@@ -110,9 +111,25 @@ const getSellerProductStats = asyncHandler(async (req, res) => {
         availableProducts,
         unavailableProducts,
       },
-      "Seller product stats fetched successfully",
+      'Seller product stats fetched successfully',
     ),
   );
+});
+
+// ================= Logout seller ======================
+
+const logoutSeller = asyncHandler(async (req, res) => {
+  const seller = req.seller;
+  if (!seller)
+    throw new ApiError(401, 'Seller not authenticated', 'UNAUTHORIZED_ACCESS');
+
+  seller.refreshToken = undefined;
+  await seller.save();
+
+  return res
+    .status(200)
+    .clearCookie('refreshToken', cookieOptions)
+    .json(new ApiResponse(200, null, 'Seller logged out successfully'));
 });
 
 module.exports = {
@@ -120,4 +137,5 @@ module.exports = {
   updateSeller,
   getSellerProducts,
   getSellerProductStats,
+  logoutSeller,
 };
