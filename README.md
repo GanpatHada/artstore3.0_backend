@@ -83,7 +83,7 @@ artstore3.0_backend/
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/artstore3.0_backend.git
+    git clone https://github.com/GanpatHada/artstore3.0_backend.git
     cd artstore3.0_backend
     ```
 
@@ -95,9 +95,8 @@ artstore3.0_backend/
 3.  **Set up environment variables:**
     Create a `.env` file in the root directory and add the necessary environment variables. You can use `.env.example` as a template.
     ```
-    PORT=3000
-    MONGO_URI=your_mongodb_connection_string
-    CORS_ORIGIN=http://localhost:5173
+    MONGODB_URI=your_mongobd_atlas_string
+    DATABASE_NAME=artstore_database or xyz
 
     ACCESS_TOKEN_SECRET=your_access_token_secret
     ACCESS_TOKEN_EXPIRY=1d
@@ -106,10 +105,9 @@ artstore3.0_backend/
 
     CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
     CLOUDINARY_API_KEY=your_cloudinary_api_key
-    CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
-    RAZORPAY_KEY_ID=your_razorpay_key_id
-    RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+   RAZORPAY_KEY=your_razorpay_key_id
+   RAZORPAY_SECRET=your_razorpay_key_secret
     ```
 
 ---
