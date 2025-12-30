@@ -32,9 +32,7 @@ Our API is documented using Postman. You can access the complete and interactive
   https://documenter.getpostman.com/view/19675500/2sBXVbGZAs
 
 - **Seller API Documentation:**
- https://documenter.getpostman.com/view/19675500/2sBXVbFt47
-
-
+  https://documenter.getpostman.com/view/19675500/2sBXVbFt47
 
 ## 🛠️ Tech Stack
 
@@ -44,7 +42,6 @@ Our API is documented using Postman. You can access the complete and interactive
 - **Payment Gateway:** Razorpay
 - **Image Storage:** Cloudinary
 - **Validation:** Joi
-
 
 ---
 
@@ -82,18 +79,21 @@ artstore3.0_backend/
 ## 🚀 Installation Guide
 
 1.  **Clone the repository:**
+
     ```bash
     git clone https://github.com/GanpatHada/artstore3.0_backend.git
     cd artstore3.0_backend
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     npm install
     ```
 
 3.  **Set up environment variables:**
     Create a `.env` file in the root directory and add the necessary environment variables. You can use `.env.example` as a template.
+
     ```
     MONGODB_URI=your_mongobd_atlas_string
     DATABASE_NAME=artstore_database or xyz
@@ -105,16 +105,18 @@ artstore3.0_backend/
 
     CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
     CLOUDINARY_API_KEY=your_cloudinary_api_key
-
-   RAZORPAY_KEY=your_razorpay_key_id
-   RAZORPAY_SECRET=your_razorpay_key_secret
     ```
+
+RAZORPAY_KEY=your_razorpay_key_id
+RAZORPAY_SECRET=your_razorpay_key_secret
+```
 
 ---
 
 ## ⚡️ Available Scripts
 
 - **To start the server in development mode (with hot-reloading):**
+
   ```bash
   npm run dev
   ```
@@ -129,4 +131,3 @@ artstore3.0_backend/
   ```
 
 ---
-

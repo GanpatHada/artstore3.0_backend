@@ -145,13 +145,6 @@ productSchema.pre('save', function (next) {
   next();
 });
 
-productSchema.pre('save', function (next) {
-  if (this.isModified('stock')) {
-    this.isActive = true;
-  }
-  next();
-});
-
 productSchema.methods.updateAverageRating = function () {
   const total = this.reviews.reduce((acc, r) => acc + r.rating, 0);
   this.averageRatings =
